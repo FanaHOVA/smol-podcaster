@@ -101,8 +101,9 @@ def title_suggestions(transcript):
         ]
     )
     
-    print("GPT-3.5 16k suggestions:")
+    print("GPT-3.5 16k title suggestions:\n\n")
     print(gpt_suggestions.choices[0].message.content)
+    print("\n")
         
     claude_suggestions = anthropic.completions.create(
         model="claude-2",
@@ -111,8 +112,9 @@ def title_suggestions(transcript):
         prompt=f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}",
     )
     
-    print("Claude's suggestions:")
+    print("Claude's title suggestions:\n")
     print(claude_suggestions.completion)
+    print("\n")
     
 def tweet_suggestions(transcript):
     prompt = f"""
@@ -131,8 +133,9 @@ def tweet_suggestions(transcript):
         ]
     )
     
-    print("GPT-3.5 16k suggestions:")
+    print("GPT-3.5 16k tweet suggestions:")
     print(gpt_suggestions.choices[0].message.content)
+    print("\n")
     
     anthropic = Anthropic(
         api_key=os.environ.get("ANTHROPIC_API_KEY"),
@@ -145,8 +148,9 @@ def tweet_suggestions(transcript):
         prompt=f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}",
     )
     
-    print("Claude's suggestions:")
+    print("Claude's tweet suggestions:")
     print(claude_suggestions.completion)
+    print("\n")
     
 def main():
     parser = argparse.ArgumentParser(description="Transcribe the podcast audio from an URL like tmpfiles.")
