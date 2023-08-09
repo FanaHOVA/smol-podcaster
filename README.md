@@ -32,3 +32,7 @@ Make a copy of the `.env.sample` and replace it with your keys:
 `mv .env.sample .env`
 
 Run with the command above
+
+# License
+
+MIT License
