@@ -1,0 +1,7 @@
+.env
+venv
+
+*.wav
+
+/podcasts-clean-transcripts/*
+/podcasts-raw-transcripts/*
