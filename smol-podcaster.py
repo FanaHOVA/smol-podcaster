@@ -57,7 +57,7 @@ def process_transcript(transcript, episode_name):
         
     clean_transcript = "\n\n".join(transcript_strings)
     
-    with open(f"./podcasts-clean-transcripts/{episode_name}.txt", "w") as f:    
+    with open(f"./podcasts-clean-transcripts/{episode_name}.md", "w") as f:    
         f.write(clean_transcript)
         
     return clean_transcript
@@ -72,6 +72,21 @@ def create_chapters(transcript):
         model="claude-2",
         max_tokens_to_sample=3000,
         prompt=f"{HUMAN_PROMPT} Here's a podcast transcript with timestamps. Generate a list of all major topics covered in the podcast, and the timestamp at which it's mentioned in the podcast. Use this format: - [00:00:00] Topic name. Here's the transcript: \n\n {transcript} {AI_PROMPT}",
+    )
+    
+    print(chapters.completion)
+    
+    return chapters.completion
+
+def create_show_notes(transcript):
+    anthropic = Anthropic(
+        api_key=os.environ.get("ANTHROPIC_API_KEY"),
+    )
+        
+    chapters = anthropic.completions.create(
+        model="claude-2",
+        max_tokens_to_sample=3000,
+        prompt=f"{HUMAN_PROMPT} I'll give you a podcast transcript; help me create a list of every company, person, project, or any other named entitiy that you find in it. Here's the transcript: \n\n {transcript} {AI_PROMPT}",
     )
     
     print(chapters.completion)
@@ -163,7 +178,7 @@ def main():
     name = args.name
     
     raw_transcript_path = f"./podcasts-raw-transcripts/{name}.json"
-    clean_transcript_path = f"./podcasts-clean-transcripts/{name}.txt"
+    clean_transcript_path = f"./podcasts-clean-transcripts/{name}.md"
     
     print(f"Running smol-podcaster on {url}")
     
@@ -183,6 +198,7 @@ def main():
         transcript = open(clean_transcript_path, "r").read()
     
     create_chapters(transcript)
+    create_show_notes(transcript)
     title_suggestions(transcript)
     tweet_suggestions(transcript)
     
