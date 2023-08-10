@@ -115,10 +115,6 @@ def title_suggestions(transcript):
             {"role": "user", "content": prompt}
         ]
     )
-    
-    print("GPT-3.5 16k title suggestions:\n\n")
-    print(gpt_suggestions.choices[0].message.content)
-    print("\n")
         
     claude_suggestions = anthropic.completions.create(
         model="claude-2",
@@ -126,10 +122,15 @@ def title_suggestions(transcript):
         temperature=0.7,
         prompt=f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}",
     )
-    
-    print("Claude's title suggestions:\n")
-    print(claude_suggestions.completion)
-    print("\n")
+
+    gpt_suggestions = gpt_suggestions.choices[0].message.content
+    claude_suggestions = claude_suggestions.completion
+
+    suggestions = f"GPT-3.5 16k title suggestions:\n\n{gpt_suggestions}\n\nClaude's title suggestions:\n{claude_suggestions}\n"
+
+    print(suggestions)
+
+    return suggestions
     
 def tweet_suggestions(transcript):
     prompt = f"""
@@ -148,10 +149,6 @@ def tweet_suggestions(transcript):
         ]
     )
     
-    print("GPT-3.5 16k tweet suggestions:")
-    print(gpt_suggestions.choices[0].message.content)
-    print("\n")
-    
     anthropic = Anthropic(
         api_key=os.environ.get("ANTHROPIC_API_KEY"),
     )
@@ -162,10 +159,15 @@ def tweet_suggestions(transcript):
         temperature=0.7,
         prompt=f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}",
     )
+
+    gpt_suggestions = gpt_suggestions.choices[0].message.content
+    claude_suggestions = claude_suggestions.completion
+
+    suggestions = f"GPT-3.5 16k tweet suggestions:\n{gpt_suggestions}\n\nClaude's tweet suggestions:\n{claude_suggestions}\n"
     
-    print("Claude's tweet suggestions:")
-    print(claude_suggestions.completion)
-    print("\n")
+    print(suggestions)
+    
+    return suggestions
     
 def main():
     parser = argparse.ArgumentParser(description="Transcribe the podcast audio from an URL like tmpfiles.")
@@ -179,7 +181,8 @@ def main():
     
     raw_transcript_path = f"./podcasts-raw-transcripts/{name}.json"
     clean_transcript_path = f"./podcasts-clean-transcripts/{name}.md"
-    
+    results_file_path = f"./podcasts-results/{name}.txt"  # New file path for results
+
     print(f"Running smol-podcaster on {url}")
     
     # These are probably not the most elegant solutions, but they 
@@ -197,10 +200,26 @@ def main():
     else:
         transcript = open(clean_transcript_path, "r").read()
     
-    create_chapters(transcript)
-    create_show_notes(transcript)
-    title_suggestions(transcript)
-    tweet_suggestions(transcript)
+    chapters = create_chapters(transcript)
+    show_notes = create_show_notes(transcript)
+    title_suggestions_str = title_suggestions(transcript)
+    tweet_suggestions_str = tweet_suggestions(transcript)
+
+    with open(results_file_path, "w") as f:
+        f.write("Chapters:\n")
+        f.write(chapters)
+        f.write("\n\n")
+        f.write("Show Notes:\n")
+        f.write(show_notes)
+        f.write("\n\n")
+        f.write("Title Suggestions:\n")
+        f.write(title_suggestions_str)
+        f.write("\n\n")
+        f.write("Tweet Suggestions:\n")
+        f.write(tweet_suggestions_str)
+        f.write("\n")
+    
+    print(f"Results written to {results_file_path}")
     
 
 if __name__ == "__main__":
