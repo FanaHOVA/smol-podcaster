@@ -5,3 +5,4 @@ venv
 
 /podcasts-clean-transcripts/*
 /podcasts-raw-transcripts/*
+/podcasts-results/*
