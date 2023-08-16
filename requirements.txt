@@ -3,3 +3,4 @@ replicate
 python-dotenv
 anthropic
 openai
+litellm
