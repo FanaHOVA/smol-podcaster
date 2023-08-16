@@ -7,6 +7,7 @@ import os
 from datetime import datetime
 import json
 import openai
+from litellm import completion
 
 load_dotenv()
 
@@ -108,23 +109,35 @@ def title_suggestions(transcript):
     {transcript}
     """
     
-    gpt_suggestions = openai.ChatCompletion.create(
+    gpt_suggestions = completion(
         model="gpt-3.5-turbo-16k", 
         temperature=0.7,
         messages=[
             {"role": "user", "content": prompt}
         ]
     )
-        
-    claude_suggestions = anthropic.completions.create(
+
+    claude_suggestions = completion(
         model="claude-2",
-        max_tokens_to_sample=3000,
+        max_tokens=3000,
         temperature=0.7,
-        prompt=f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}",
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
     )
 
-    gpt_suggestions = gpt_suggestions.choices[0].message.content
-    claude_suggestions = claude_suggestions.completion
+    # Example usage litellm with - llama2
+    # Add REPLICATE_API_TOKEN to .env
+    # llama2_suggestions = completion(
+    #     model="replicate/llama-2-70b-chat:2c1608e18606fad2812020dc541930f2d0495ce32eee50074220b87300bc16e1", 
+    #     temperature=0.7,
+    #     messages=[
+    #         {"role": "user", "content": prompt}
+    #     ]
+    # )
+
+    gpt_suggestions = gpt_suggestions['choices'][0]['message']['content']
+    claude_suggestions = claude_suggestions['choices'][0]['message']['content']
 
     suggestions = f"GPT-3.5 16k title suggestions:\n\n{gpt_suggestions}\n\nClaude's title suggestions:\n{claude_suggestions}\n"
 
@@ -141,27 +154,25 @@ def tweet_suggestions(transcript):
     {transcript}
     """
     
-    gpt_suggestions = openai.ChatCompletion.create(
+    gpt_suggestions = completion(
         model="gpt-3.5-turbo-16k", 
         temperature=0.7,
         messages=[
             {"role": "user", "content": prompt}
         ]
     )
-    
-    anthropic = Anthropic(
-        api_key=os.environ.get("ANTHROPIC_API_KEY"),
-    )
-        
-    claude_suggestions = anthropic.completions.create(
+
+    claude_suggestions = completion(
         model="claude-2",
-        max_tokens_to_sample=3000,
+        max_tokens=3000,
         temperature=0.7,
-        prompt=f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}",
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
     )
 
-    gpt_suggestions = gpt_suggestions.choices[0].message.content
-    claude_suggestions = claude_suggestions.completion
+    gpt_suggestions = gpt_suggestions['choices'][0]['message']['content']
+    claude_suggestions = claude_suggestions['choices'][0]['message']['content']
 
     suggestions = f"GPT-3.5 16k tweet suggestions:\n{gpt_suggestions}\n\nClaude's tweet suggestions:\n{claude_suggestions}\n"
     
