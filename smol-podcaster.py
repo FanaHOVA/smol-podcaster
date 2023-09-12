@@ -1,12 +1,13 @@
 import argparse
 import requests
-import replicate
-from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
 from dotenv import load_dotenv
 import os
 from datetime import datetime
 import json
+
+import replicate
 import openai
+from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
 
 load_dotenv()
 
@@ -108,13 +109,18 @@ def title_suggestions(transcript):
     {transcript}
     """
     
-    gpt_suggestions = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo-16k", 
-        temperature=0.7,
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
-    )
+    try:
+        result = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-16k", 
+            temperature=0.7,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        gpt_suggestions = result.choices[0].message.content
+    except openai.error.InvalidRequestError as e:
+        print(f"An error occurred: {e}")
+        gpt_suggestions = "Out of context for GPT"
         
     claude_suggestions = anthropic.completions.create(
         model="claude-2",
@@ -123,7 +129,6 @@ def title_suggestions(transcript):
         prompt=f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}",
     )
 
-    gpt_suggestions = gpt_suggestions.choices[0].message.content
     claude_suggestions = claude_suggestions.completion
 
     suggestions = f"GPT-3.5 16k title suggestions:\n\n{gpt_suggestions}\n\nClaude's title suggestions:\n{claude_suggestions}\n"
@@ -141,14 +146,19 @@ def tweet_suggestions(transcript):
     {transcript}
     """
     
-    gpt_suggestions = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo-16k", 
-        temperature=0.7,
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
-    )
-    
+    try:
+        result = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-16k", 
+            temperature=0.7,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        gpt_suggestions = result.choices[0].message.content
+    except openai.error.InvalidRequestError as e:
+        print(f"An error occurred: {e}")
+        gpt_suggestions = "Out of context for GPT"
+
     anthropic = Anthropic(
         api_key=os.environ.get("ANTHROPIC_API_KEY"),
     )
@@ -160,7 +170,6 @@ def tweet_suggestions(transcript):
         prompt=f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}",
     )
 
-    gpt_suggestions = gpt_suggestions.choices[0].message.content
     claude_suggestions = claude_suggestions.completion
 
     suggestions = f"GPT-3.5 16k tweet suggestions:\n{gpt_suggestions}\n\nClaude's tweet suggestions:\n{claude_suggestions}\n"
@@ -181,7 +190,7 @@ def main():
     
     raw_transcript_path = f"./podcasts-raw-transcripts/{name}.json"
     clean_transcript_path = f"./podcasts-clean-transcripts/{name}.md"
-    results_file_path = f"./podcasts-results/{name}.txt"  # New file path for results
+    results_file_path = f"./podcasts-results/{name}.md"
 
     print(f"Running smol-podcaster on {url}")
     
