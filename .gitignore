@@ -3,6 +3,6 @@ venv
 
 *.wav
 
-/podcasts-clean-transcripts/*
-/podcasts-raw-transcripts/*
+/podcasts-clean-transcripts/*.md
+/podcasts-raw-transcripts/*.json
 /podcasts-results/*
