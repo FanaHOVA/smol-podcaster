@@ -94,6 +94,21 @@ def create_show_notes(transcript):
     
     return chapters.completion
 
+def create_writeup(transcript):
+    anthropic = Anthropic(
+        api_key=os.environ.get("ANTHROPIC_API_KEY"),
+    )
+        
+    chapters = anthropic.completions.create(
+        model="claude-2",
+        max_tokens_to_sample=3000,
+        prompt=f"{HUMAN_PROMPT} You're the writing assistant of a podcast producer. For each episode, we do a write up to recap the core ideas of the episode and expand on them. Write a list of bullet points on topics we should expand on, and then 4-5 paragraphs about them. Here's the transcript: \n\n {transcript} {AI_PROMPT}",
+    )
+    
+    print(chapters.completion)
+    
+    return chapters.completion
+
 def title_suggestions(transcript):
     prompt = f"""
     These are some titles of previous podcast episodes we've published:
@@ -217,6 +232,9 @@ def main():
     with open(results_file_path, "w") as f:
         f.write("Chapters:\n")
         f.write(chapters)
+        f.write("\n\n")
+        f.write("Writeup:\n")
+        f.write(create_writeup(transcript))
         f.write("\n\n")
         f.write("Show Notes:\n")
         f.write(show_notes)
