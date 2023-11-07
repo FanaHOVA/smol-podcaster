@@ -2,7 +2,12 @@
 venv
 
 *.wav
+*.mp3
 
 /podcasts-clean-transcripts/*.md
 /podcasts-raw-transcripts/*.json
 /podcasts-results/*
+
+.DS_Store
+
+myenv
