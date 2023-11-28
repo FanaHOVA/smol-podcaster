@@ -118,15 +118,18 @@ def title_suggestions(transcript):
     3. "Llama 2: The New Open LLM SOTA"
     4. "FlashAttention 2: making Transformers 800\%\ faster w/o approximation"
     5. "Mapping the future of *truly* Open Models and Training Dolly for $30"
+    6. "Beating GPT-4 with Open Source LLMs"
+    7. "Why AI Agents Don't Work (yet)"
+    8. "The End of Finetuning"
 
-    Here's a transcript of the podcast episode; suggest 8 title options for it:
+    Here's a transcript of the latest podcast episode; suggest 8 title options for it that will be just as successful in catching the readers' attention:
     
     {transcript}
     """
     
     try:
         result = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-16k", 
+            model="gpt-4-1106-preview", 
             temperature=0.7,
             messages=[
                 {"role": "user", "content": prompt}
@@ -163,7 +166,7 @@ def tweet_suggestions(transcript):
     
     try:
         result = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-16k", 
+            model="gpt-4-1106-preview", 
             temperature=0.7,
             messages=[
                 {"role": "user", "content": prompt}
