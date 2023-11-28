@@ -129,7 +129,7 @@ def title_suggestions(transcript):
     
     try:
         result = openai.ChatCompletion.create(
-            model="gpt-gpt-4-1106-preview", 
+            model="gpt-4-1106-preview", 
             temperature=0.7,
             messages=[
                 {"role": "user", "content": prompt}
@@ -166,7 +166,7 @@ def tweet_suggestions(transcript):
     
     try:
         result = openai.ChatCompletion.create(
-            model="gpt-gpt-4-1106-preview", 
+            model="gpt-4-1106-preview", 
             temperature=0.7,
             messages=[
                 {"role": "user", "content": prompt}
