@@ -16,11 +16,11 @@ anthropic = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 def transcribe_audio(file_url, episode_name):
     output = replicate.run(
-        "thomasmol/whisper-diarization:7e5dafea13d80265ea436e51a310ae5103b9f16e2039f54de4eede3060a61617",
+        "fanahova/smol-podcaster",
         input={
             "file_url": file_url,
             "num_speakers": 3,
-            "prompt": "A technical podcast about artificial intelligence and machine learning"
+            "prompt": "A technical podcast about artificial intelligence and machine learning hosted by Alessio and Swyx"
         }
     )
     
