@@ -16,7 +16,7 @@ anthropic = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 def transcribe_audio(file_url, episode_name):
     output = replicate.run(
-        "fanahova/smol-podcaster",
+        "fanahova/smol-podcaster:5cc8c267e362987b4f0e88f2a22c97a4ee6f01afc6b3d21ad2f6f97b97201fb6",
         input={
             "file_url": file_url,
             "num_speakers": 3,
