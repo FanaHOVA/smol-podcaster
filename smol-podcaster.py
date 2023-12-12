@@ -2,6 +2,7 @@ import argparse
 import requests
 from dotenv import load_dotenv
 import os
+import re
 from datetime import datetime
 import json
 
@@ -15,12 +16,15 @@ openai.api_key = os.environ.get("OPENAI_API_KEY")
 anthropic = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 def transcribe_audio(file_url, episode_name):
+    # Check if the URL is from Dropbox and replace the domain
+    file_url = re.sub(r"https?:\/\/(www\.)?dropbox\.com", "https://dl.dropboxusercontent.com", file_url)
+
     output = replicate.run(
-        "fanahova/smol-podcaster:5cc8c267e362987b4f0e88f2a22c97a4ee6f01afc6b3d21ad2f6f97b97201fb6",
+        "thomasmol/whisper-diarization:4e97af019e492ccf3837860c05998523d71c4fdcba15f00a982344779386c9e8",
         input={
             "file_url": file_url,
             "num_speakers": 3,
-            "prompt": "A technical podcast about artificial intelligence and machine learning hosted by Alessio and Swyx"
+            "prompt": "Audio of Latent Space, a technical podcast about artificial intelligence and machine learning hosted by Alessio and Swyx"
         }
     )
     
@@ -209,6 +213,7 @@ def main():
     raw_transcript_path = f"./podcasts-raw-transcripts/{name}.json"
     clean_transcript_path = f"./podcasts-clean-transcripts/{name}.md"
     results_file_path = f"./podcasts-results/{name}.md"
+    substack_file_path = f"./podcasts-results/substack_{name}.md"
 
     print(f"Running smol-podcaster on {url}")
     
@@ -248,6 +253,14 @@ def main():
         f.write("Tweet Suggestions:\n")
         f.write(tweet_suggestions_str)
         f.write("\n")
+        
+    with open(substack_file_path, "w") as f:
+        f.write("### Show Notes\n")
+        f.write(show_notes)
+        f.write("### Timestamps\n")
+        f.write(chapters)
+        f.write("### Transcript\n")
+        f.write(transcript)
     
     print(f"Results written to {results_file_path}")
     
