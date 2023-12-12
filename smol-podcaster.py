@@ -19,6 +19,8 @@ def transcribe_audio(file_url, episode_name):
     # Check if the URL is from Dropbox and replace the domain
     file_url = re.sub(r"https?:\/\/(www\.)?dropbox\.com", "https://dl.dropboxusercontent.com", file_url)
 
+    print(f"Running smol-podcaster on {file_url}")
+
     output = replicate.run(
         "thomasmol/whisper-diarization:4e97af019e492ccf3837860c05998523d71c4fdcba15f00a982344779386c9e8",
         input={
@@ -44,15 +46,14 @@ def process_transcript(transcript, episode_name):
         
     The transcript argument of this function is an array of these. 
     """
-    
     transcript_strings = []
     
     for entry in transcript:
         speaker = entry["speaker"]
         text = entry["text"]
 
-        # Divide "end" value by 60 and convert to hours, minutes and seconds
-        seconds = int(entry["end"])
+        # Convert "end" value to seconds and convert to hours, minutes and seconds
+        seconds = int(float(entry["end"]))
         minutes, seconds = divmod(seconds, 60)
         hours, minutes = divmod(minutes, 60)
 
@@ -214,8 +215,6 @@ def main():
     clean_transcript_path = f"./podcasts-clean-transcripts/{name}.md"
     results_file_path = f"./podcasts-results/{name}.md"
     substack_file_path = f"./podcasts-results/substack_{name}.md"
-
-    print(f"Running smol-podcaster on {url}")
     
     # These are probably not the most elegant solutions, but they 
     # help with saving time since transcriptions are the same but we
@@ -227,15 +226,30 @@ def main():
         file = open(raw_transcript_path, "r").read()
         transcript = json.loads(file)['segments']
         
+    print("Raw transcript is ready")
+        
     if not os.path.exists(clean_transcript_path):
         transcript = process_transcript(transcript, name)
     else:
         transcript = open(clean_transcript_path, "r").read()
+        
+    print("Clean transcript is ready")
     
     chapters = create_chapters(transcript)
+    
+    print("Chapters are ready")
+    
     show_notes = create_show_notes(transcript)
+    
+    print("Show notes are ready")
+    
     title_suggestions_str = title_suggestions(transcript)
+    
+    print("Titles are ready")
+    
     tweet_suggestions_str = tweet_suggestions(transcript)
+    
+    print("Tweets are ready")
 
     with open(results_file_path, "w") as f:
         f.write("Chapters:\n")
