@@ -112,16 +112,22 @@ def create_chapters(transcript):
     return "\n".join([claude_suggestions, gpt_suggestions])
 
 def create_show_notes(transcript):
-    prompt = "I'll give you a podcast transcript; help me create a list of every company, person, project, or any other named entitiy that you find in it. Here's the transcript: \n\n {transcript}"
+    prompt = f"I'll give you a podcast transcript; help me create a list of every company, person, project, or any other named entitiy that you find in it. Here's the transcript: \n\n {transcript}"
     
-    return call_anthropic(prompt, 0.4)
+    claude_suggestions = call_anthropic(prompt, 0.4)
+    gpt_suggestions = call_openai(prompt, 0.4)
+
+    return "\n".join([claude_suggestions, gpt_suggestions])
 
 def create_writeup(transcript):
-    prompt = "You're the writing assistant of a podcast producer. For each episode, we do a write up to recap the core ideas of the episode and expand on them. Write a list of bullet points on topics we should expand on, and then 4-5 paragraphs about them. Here's the transcript: \n\n {transcript}",
+    prompt = f"You're the writing assistant of a podcast producer. For each episode, we do a write up to recap the core ideas of the episode and expand on them. Write a list of bullet points on topics we should expand on, and then 4-5 paragraphs about them. Here's the transcript: \n\n {transcript}",
     
-    return call_anthropic(prompt, 0.7)
+    claude_suggestions = call_anthropic(prompt, 0.7)
+    gpt_suggestions = call_openai(prompt, 0.7)
 
-def title_suggestions(transcript):
+    return "\n".join([claude_suggestions, gpt_suggestions])
+
+def title_suggestions(writeup):
     prompt = f"""
     These are some titles of previous podcast episodes we've published:
 
@@ -134,9 +140,9 @@ def title_suggestions(transcript):
     7. "Why AI Agents Don't Work (yet)"
     8. "The End of Finetuning"
 
-    Here's a transcript of the latest podcast episode; suggest 8 title options for it that will be just as successful in catching the readers' attention:
+    Here's a write up of the latest podcast episode; suggest 8 title options for it that will be just as successful in catching the readers' attention:
     
-    {transcript}
+    {writeup}
     """
     
     gpt_suggestions = call_openai(prompt, 0.7)
@@ -200,13 +206,19 @@ def main():
     
     chapters = create_chapters(transcript)
     
+    print(chapters)
+    
     print("Chapters are ready")
     
     show_notes = create_show_notes(transcript)
     
     print("Show notes are ready")
     
-    title_suggestions_str = title_suggestions(transcript)
+    writeup = create_writeup(transcript)
+    
+    print("Writeup is ready")
+    
+    title_suggestions_str = title_suggestions(writeup)
     
     print("Titles are ready")
     
@@ -219,7 +231,7 @@ def main():
         f.write(chapters)
         f.write("\n\n")
         f.write("Writeup:\n")
-        f.write(create_writeup(transcript))
+        f.write(writeup)
         f.write("\n\n")
         f.write("Show Notes:\n")
         f.write(show_notes)
