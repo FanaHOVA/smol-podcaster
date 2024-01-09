@@ -87,13 +87,13 @@ def process_transcript(transcript, episode_name):
         text = entry["text"]
 
         # Convert "end" value to seconds and convert to hours, minutes and seconds
-        seconds = int(float(entry["end"]))
+        seconds = int(float(entry["start"]))
         minutes, seconds = divmod(seconds, 60)
         hours, minutes = divmod(minutes, 60)
 
         timestamp = "[{:02d}:{:02d}:{:02d}]".format(hours, minutes, seconds)
 
-        transcript_strings.append(f"**{speaker}**: {text} {timestamp}")
+        transcript_strings.append(f"**{speaker}** {timestamp}: {text}")
         
     clean_transcript = "\n\n".join(transcript_strings)
     
