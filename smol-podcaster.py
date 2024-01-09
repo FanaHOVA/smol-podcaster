@@ -16,6 +16,7 @@ openai.api_key = os.environ.get("OPENAI_API_KEY")
 anthropic = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 def call_anthropic(prompt, temperature=0.5):
+    prompt = f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}"
     try:
         anthropic = Anthropic(
             api_key=os.environ.get("ANTHROPIC_API_KEY"),
@@ -37,6 +38,7 @@ def call_openai(prompt, temperature=0.5):
         result = openai.ChatCompletion.create(
             model="gpt-4-1106-preview", 
             temperature=temperature,
+            max_tokens_to_sample=3000,
             messages=[
                 {"role": "user", "content": prompt}
             ]
@@ -110,12 +112,12 @@ def create_chapters(transcript):
     return "\n".join([claude_suggestions, gpt_suggestions])
 
 def create_show_notes(transcript):
-    prompt = f"{HUMAN_PROMPT} I'll give you a podcast transcript; help me create a list of every company, person, project, or any other named entitiy that you find in it. Here's the transcript: \n\n {transcript} {AI_PROMPT}"
+    prompt = "I'll give you a podcast transcript; help me create a list of every company, person, project, or any other named entitiy that you find in it. Here's the transcript: \n\n {transcript}"
     
     return call_anthropic(prompt, 0.4)
 
 def create_writeup(transcript):
-    prompt = f"{HUMAN_PROMPT} You're the writing assistant of a podcast producer. For each episode, we do a write up to recap the core ideas of the episode and expand on them. Write a list of bullet points on topics we should expand on, and then 4-5 paragraphs about them. Here's the transcript: \n\n {transcript} {AI_PROMPT}",
+    prompt = "You're the writing assistant of a podcast producer. For each episode, we do a write up to recap the core ideas of the episode and expand on them. Write a list of bullet points on topics we should expand on, and then 4-5 paragraphs about them. Here's the transcript: \n\n {transcript}",
     
     return call_anthropic(prompt, 0.7)
 
@@ -138,7 +140,7 @@ def title_suggestions(transcript):
     """
     
     gpt_suggestions = call_openai(prompt, 0.7)
-    claude_suggestions = call_anthropic(f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}")
+    claude_suggestions = call_anthropic(prompt)
 
     suggestions = f"\n\nGPT-4 title suggestions:\n\n{gpt_suggestions}\n\nClaude's title suggestions:\n{claude_suggestions}\n\n"
 
@@ -154,7 +156,7 @@ def tweet_suggestions(transcript):
     """
     
     gpt_suggestions = call_openai(prompt, 0.7)
-    claude_suggestions = call_anthropic(f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}", 0.7)
+    claude_suggestions = call_anthropic(prompt, 0.7)
     
     suggestions = f"GPT-4 tweet suggestions:\n{gpt_suggestions}\n\nClaude's tweet suggestions:\n{claude_suggestions}\n"
     
