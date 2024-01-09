@@ -15,18 +15,50 @@ load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 anthropic = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
-def transcribe_audio(file_url, episode_name):
+def call_anthropic(prompt, temperature=0.5):
+    try:
+        anthropic = Anthropic(
+            api_key=os.environ.get("ANTHROPIC_API_KEY"),
+        )
+            
+        request = anthropic.completions.create(
+            model="claude-2",
+            max_tokens_to_sample=3000,
+            temperature=temperature,
+            prompt=prompt,
+        )
+        
+        return request.completion
+    except:
+        return "An error occured with Claude"
+
+def call_openai(prompt, temperature=0.5):
+    try:
+        result = openai.ChatCompletion.create(
+            model="gpt-4-1106-preview", 
+            temperature=temperature,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return result.choices[0].message.content
+    except openai.error.InvalidRequestError as e:
+        error_msg = f"An error occurred with OpenAI: {e}"
+        print(error_msg)
+        return error_msg
+
+def transcribe_audio(file_url, episode_name, speakers_count):
     # Check if the URL is from Dropbox and replace the domain
     file_url = re.sub(r"https?:\/\/(www\.)?dropbox\.com", "https://dl.dropboxusercontent.com", file_url)
 
     print(f"Running smol-podcaster on {file_url}")
 
     output = replicate.run(
-        "thomasmol/whisper-diarization:4e97af019e492ccf3837860c05998523d71c4fdcba15f00a982344779386c9e8",
+        "thomasmol/whisper-diarization:7e5dafea13d80265ea436e51a310ae5103b9f16e2039f54de4eede3060a61617",
         input={
             "file_url": file_url,
-            "num_speakers": 3,
-            "prompt": "Audio of Latent Space, a technical podcast about artificial intelligence and machine learning hosted by Alessio and Swyx"
+            "num_speakers": speakers_count,
+            "prompt": "Audio of Latent Space, a technical podcast about artificial intelligence and machine learning hosted by Swyx and Alessio."
         }
     )
     
@@ -70,49 +102,22 @@ def process_transcript(transcript, episode_name):
     
  
 def create_chapters(transcript):
-    anthropic = Anthropic(
-        api_key=os.environ.get("ANTHROPIC_API_KEY"),
-    )
-        
-    chapters = anthropic.completions.create(
-        model="claude-2",
-        max_tokens_to_sample=3000,
-        prompt=f"{HUMAN_PROMPT} Here's a podcast transcript with timestamps. Generate a list of all major topics covered in the podcast, and the timestamp at which it's mentioned in the podcast. Use this format: - [00:00:00] Topic name. Here's the transcript: \n\n {transcript} {AI_PROMPT}",
-    )
+    prompt = f"I'm going to give you a podcast transcript with timestamps for each speaker section in this format: `SPEAKER: Some transcription [00:00:00]`. Generate a list of all major topics covered in the podcast, and the timestamp where the discussion starts. Make sure to use the timestamp BEFORE the the discussion starts. Make sure to cover topics from the whole episode. Use this format: `- [00:00:00] Topic name`. Here's the transcript: \n\n {transcript}"
     
-    print(chapters.completion)
+    claude_suggestions = call_anthropic(prompt, 0.6)
+    gpt_suggestions = call_openai(prompt, 0.6)
     
-    return chapters.completion
+    return "\n".join([claude_suggestions, gpt_suggestions])
 
 def create_show_notes(transcript):
-    anthropic = Anthropic(
-        api_key=os.environ.get("ANTHROPIC_API_KEY"),
-    )
-        
-    chapters = anthropic.completions.create(
-        model="claude-2",
-        max_tokens_to_sample=3000,
-        prompt=f"{HUMAN_PROMPT} I'll give you a podcast transcript; help me create a list of every company, person, project, or any other named entitiy that you find in it. Here's the transcript: \n\n {transcript} {AI_PROMPT}",
-    )
+    prompt = f"{HUMAN_PROMPT} I'll give you a podcast transcript; help me create a list of every company, person, project, or any other named entitiy that you find in it. Here's the transcript: \n\n {transcript} {AI_PROMPT}"
     
-    print(chapters.completion)
-    
-    return chapters.completion
+    return call_anthropic(prompt, 0.4)
 
 def create_writeup(transcript):
-    anthropic = Anthropic(
-        api_key=os.environ.get("ANTHROPIC_API_KEY"),
-    )
-        
-    chapters = anthropic.completions.create(
-        model="claude-2",
-        max_tokens_to_sample=3000,
-        prompt=f"{HUMAN_PROMPT} You're the writing assistant of a podcast producer. For each episode, we do a write up to recap the core ideas of the episode and expand on them. Write a list of bullet points on topics we should expand on, and then 4-5 paragraphs about them. Here's the transcript: \n\n {transcript} {AI_PROMPT}",
-    )
+    prompt = f"{HUMAN_PROMPT} You're the writing assistant of a podcast producer. For each episode, we do a write up to recap the core ideas of the episode and expand on them. Write a list of bullet points on topics we should expand on, and then 4-5 paragraphs about them. Here's the transcript: \n\n {transcript} {AI_PROMPT}",
     
-    print(chapters.completion)
-    
-    return chapters.completion
+    return call_anthropic(prompt, 0.7)
 
 def title_suggestions(transcript):
     prompt = f"""
@@ -132,31 +137,10 @@ def title_suggestions(transcript):
     {transcript}
     """
     
-    try:
-        result = openai.ChatCompletion.create(
-            model="gpt-4-1106-preview", 
-            temperature=0.7,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
-        gpt_suggestions = result.choices[0].message.content
-    except openai.error.InvalidRequestError as e:
-        print(f"An error occurred: {e}")
-        gpt_suggestions = "Out of context for GPT"
-        
-    claude_suggestions = anthropic.completions.create(
-        model="claude-2",
-        max_tokens_to_sample=3000,
-        temperature=0.7,
-        prompt=f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}",
-    )
+    gpt_suggestions = call_openai(prompt, 0.7)
+    claude_suggestions = call_anthropic(f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}")
 
-    claude_suggestions = claude_suggestions.completion
-
-    suggestions = f"GPT-3.5 16k title suggestions:\n\n{gpt_suggestions}\n\nClaude's title suggestions:\n{claude_suggestions}\n"
-
-    print(suggestions)
+    suggestions = f"\n\nGPT-4 title suggestions:\n\n{gpt_suggestions}\n\nClaude's title suggestions:\n{claude_suggestions}\n\n"
 
     return suggestions
     
@@ -169,35 +153,10 @@ def tweet_suggestions(transcript):
     {transcript}
     """
     
-    try:
-        result = openai.ChatCompletion.create(
-            model="gpt-4-1106-preview", 
-            temperature=0.7,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
-        gpt_suggestions = result.choices[0].message.content
-    except openai.error.InvalidRequestError as e:
-        print(f"An error occurred: {e}")
-        gpt_suggestions = "Out of context for GPT"
-
-    anthropic = Anthropic(
-        api_key=os.environ.get("ANTHROPIC_API_KEY"),
-    )
-        
-    claude_suggestions = anthropic.completions.create(
-        model="claude-2",
-        max_tokens_to_sample=3000,
-        temperature=0.7,
-        prompt=f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}",
-    )
-
-    claude_suggestions = claude_suggestions.completion
-
-    suggestions = f"GPT-3.5 16k tweet suggestions:\n{gpt_suggestions}\n\nClaude's tweet suggestions:\n{claude_suggestions}\n"
+    gpt_suggestions = call_openai(prompt, 0.7)
+    claude_suggestions = call_anthropic(f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}", 0.7)
     
-    print(suggestions)
+    suggestions = f"GPT-4 tweet suggestions:\n{gpt_suggestions}\n\nClaude's tweet suggestions:\n{claude_suggestions}\n"
     
     return suggestions
     
@@ -205,11 +164,13 @@ def main():
     parser = argparse.ArgumentParser(description="Transcribe the podcast audio from an URL like tmpfiles.")
     parser.add_argument("url", help="The URL of the podcast to be processed.")
     parser.add_argument("name", help="The name of the output transcript file without extension.")
-
+    parser.add_argument("speakers", help="The number of speakers on the track.", default=3)
+    
     args = parser.parse_args()
 
     url = args.url
     name = args.name
+    speakers_count = args.speakers
     
     raw_transcript_path = f"./podcasts-raw-transcripts/{name}.json"
     clean_transcript_path = f"./podcasts-clean-transcripts/{name}.md"
@@ -221,7 +182,7 @@ def main():
     # might want to tweak the other prompts for better results.
     
     if not os.path.exists(raw_transcript_path):
-        transcript = transcribe_audio(url, name)
+        transcript = transcribe_audio(url, name, speakers_count)
     else:
         file = open(raw_transcript_path, "r").read()
         transcript = json.loads(file)['segments']
@@ -271,8 +232,10 @@ def main():
     with open(substack_file_path, "w") as f:
         f.write("### Show Notes\n")
         f.write(show_notes)
+        f.write("\n\n")
         f.write("### Timestamps\n")
         f.write(chapters)
+        f.write("\n\n")
         f.write("### Transcript\n")
         f.write(transcript)
     
