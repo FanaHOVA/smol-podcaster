@@ -36,9 +36,8 @@ def call_anthropic(prompt, temperature=0.5):
 def call_openai(prompt, temperature=0.5):
     try:
         result = openai.ChatCompletion.create(
-            model="gpt-4-1106-preview", 
+            model="gpt-4-1106-preview", # Upgrade when 128k context is live for all
             temperature=temperature,
-            max_tokens_to_sample=3000,
             messages=[
                 {"role": "user", "content": prompt}
             ]
@@ -178,7 +177,7 @@ def main():
 
     url = args.url
     name = args.name
-    speakers_count = args.speakers
+    speakers_count = int(args.speakers)
     
     raw_transcript_path = f"./podcasts-raw-transcripts/{name}.json"
     clean_transcript_path = f"./podcasts-clean-transcripts/{name}.md"
