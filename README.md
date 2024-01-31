@@ -11,11 +11,11 @@ We use smol-podcaster to take care of most of [Latent Space](https://latent.spac
 
 To run:
 
-`python smol-podcaster.py AUDIO_FILE_URL GUEST_NAME NUMBER_OF_SPEAKERS`
+`python smol_podcaster.py AUDIO_FILE_URL GUEST_NAME NUMBER_OF_SPEAKERS`
 
 The URL needs to be a direct download link, it can't be a GDrive. For files <100MB you can use tmpfiles.org, otherwise Dropbox. For example: 
 
-`python smol-podcaster.py "https://dl.dropboxusercontent.com/XXXX" "Tianqi" 3`  
+`python smol_podcaster.py "https://dl.dropboxusercontent.com/XXXX" "Tianqi" 3`  
 
 The script will automatically switch https://www.dropbox.com to https://dl.dropboxusercontent.com in the link.
 
