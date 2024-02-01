@@ -3,3 +3,5 @@ replicate
 python-dotenv
 anthropic
 openai
+flask
+celery

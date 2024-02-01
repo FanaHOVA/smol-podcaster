@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Smol Podcaster</title>
+</head>
+
+<body class="bg-gray-100">
+
+  <header class="bg-indigo-600 p-4 text-white">
+    <h1 class="text-3xl font-bold text-center">Smol Podcaster</h1> 
+  </header>
+
+  <main class="max-w-lg mx-auto p-6">
+
+    <h2 class="text-2xl font-bold mb-6">Podcast Processing Form</h2>
+
+    {% if confirmation %}
+      <div class="p-4 bg-green-200">
+        {{ confirmation }}
+      </div>
+    {% endif %}
+  
+    <form action="/process" method="post" class="bg-white p-6 rounded-lg shadow-md">
+
+      <div class="mb-4">
+        <label for="url" class="block text-gray-700 font-bold mb-2">URL:</label>
+        <input type="text" id="url" name="url" class="border p-2 w-full rounded">
+      </div>
+
+      <div class="mb-4">
+        <label for="speakers" class="block text-gray-700 font-bold mb-2">Number of Speakers:</label>
+        <input type="text" id="speakers" name="speakers" class="border p-2 w-full rounded">
+      </div>
+
+      <div class="mb-4">
+        <label for="name" class="block text-gray-700 font-bold mb-2">Name:</label>
+        <input type="text" id="name" name="name" class="border p-2 w-full rounded">
+      </div>
+
+      <button class="bg-indigo-500 text-white py-2 px-4 rounded hover:bg-indigo-600">Submit</button>
+
+    </form>
+  </main>
+
+</body>
+
+</html>

@@ -167,18 +167,7 @@ def tweet_suggestions(transcript):
     
     return suggestions
     
-def main():
-    parser = argparse.ArgumentParser(description="Transcribe the podcast audio from an URL like tmpfiles.")
-    parser.add_argument("url", help="The URL of the podcast to be processed.")
-    parser.add_argument("name", help="The name of the output transcript file without extension.")
-    parser.add_argument("speakers", help="The number of speakers on the track.", default=3)
-    
-    args = parser.parse_args()
-
-    url = args.url
-    name = args.name
-    speakers_count = int(args.speakers)
-    
+def main(url, name, speakers_count): 
     raw_transcript_path = f"./podcasts-raw-transcripts/{name}.json"
     clean_transcript_path = f"./podcasts-clean-transcripts/{name}.md"
     results_file_path = f"./podcasts-results/{name}.md"
@@ -188,6 +177,8 @@ def main():
     # help with saving time since transcriptions are the same but we
     # might want to tweak the other prompts for better results.
     
+    print('Starting transcription')
+    
     if not os.path.exists(raw_transcript_path):
         transcript = transcribe_audio(url, name, speakers_count)
     else:
@@ -195,14 +186,14 @@ def main():
         transcript = json.loads(file)['segments']
         
     print("Raw transcript is ready")
-        
+    
     if not os.path.exists(clean_transcript_path):
         transcript = process_transcript(transcript, name)
     else:
         transcript = open(clean_transcript_path, "r").read()
         
     print("Clean transcript is ready")
-    
+
     chapters = create_chapters(transcript)
     
     print(chapters)
@@ -253,6 +244,8 @@ def main():
         f.write(transcript)
     
     print(f"Results written to {results_file_path}")
+    
+    return results_file_path
     
 
 if __name__ == "__main__":
