@@ -9,6 +9,8 @@ We use smol-podcaster to take care of most of [Latent Space](https://latent.spac
 - Give you title ideas based on previous ones (modify the prompt to give examples of your own, it comes with Latent Space ones)
 - Give you ideas for tweets to announce the podcast
 
+### Run from CLI
+
 To run:
 
 `python smol_podcaster.py AUDIO_FILE_URL GUEST_NAME NUMBER_OF_SPEAKERS`
@@ -18,6 +20,17 @@ The URL needs to be a direct download link, it can't be a GDrive. For files <100
 `python smol_podcaster.py "https://dl.dropboxusercontent.com/XXXX" "Tianqi" 3`  
 
 The script will automatically switch https://www.dropbox.com to https://dl.dropboxusercontent.com in the link.
+
+### Run with web UI + background runs
+
+If you want to run a bunch in parallel (or remotely) you can use the web UI + celery. Before running, you'll need a broker for celery ([I use RabbitMQ](https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/rabbitmq.html)).
+
+```
+celery -A tasks worker --loglevel=INFO
+flask --app web.py --debug run
+```
+
+Then simply go to `localhost:5000` and fill out the form. The files will be saved locally as `/podcast-results` just like the cli version.
 
 # Environment Setup
 
