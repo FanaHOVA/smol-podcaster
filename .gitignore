@@ -7,3 +7,5 @@ myenv
 /podcasts-clean-transcripts/*.md
 /podcasts-raw-transcripts/*.json
 /podcasts-results/*
+
+__pycache__
