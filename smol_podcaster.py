@@ -3,7 +3,7 @@ import requests
 from dotenv import load_dotenv
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 
 import replicate
@@ -36,7 +36,7 @@ def call_anthropic(prompt, temperature=0.5):
 def call_openai(prompt, temperature=0.5):
     try:
         result = openai.ChatCompletion.create(
-            model="gpt-4-1106-preview", # Upgrade when 128k context is live for all
+            model="gpt-4-0125-preview",
             temperature=temperature,
             messages=[
                 {"role": "user", "content": prompt}
@@ -100,12 +100,22 @@ def process_transcript(transcript, episode_name):
         f.write(clean_transcript)
         
     return clean_transcript
-    
- 
+
+# They just need a txt with all text, it will then sync it automatically
+def process_youtube_transcript(parts, episode_name):
+    formatted_transcriptions = []
+
+    for part in parts:
+        formatted_transcriptions.append(part['text'].strip())
+            
+    with open(f"./podcasts-results/{episode_name}-yt-subtitles.txt", "w") as file:
+        file.writelines("\n".join(formatted_transcriptions))
+
 def create_chapters(transcript):
     prompt = f"I'm going to give you a podcast transcript with timestamps for each speaker section in this format: `SPEAKER: Some transcription [00:00:00]`. Generate a list of all major topics covered in the podcast, and the timestamp where the discussion starts. Make sure to use the timestamp BEFORE the the discussion starts. Make sure to cover topics from the whole episode. Use this format: `- [00:00:00] Topic name`. Here's the transcript: \n\n {transcript}"
     
-    claude_suggestions = call_anthropic(prompt, 0.6)
+    # GPT-4 is better at this as well
+    claude_suggestions = "" #call_anthropic(prompt, 0.6)
     gpt_suggestions = call_openai(prompt, 0.6)
     
     return "\n".join([claude_suggestions, gpt_suggestions])
@@ -113,7 +123,8 @@ def create_chapters(transcript):
 def create_show_notes(transcript):
     prompt = f"I'll give you a podcast transcript; help me create a list of every company, person, project, or any other named entitiy that you find in it. Here's the transcript: \n\n {transcript}"
     
-    claude_suggestions = call_anthropic(prompt, 0.4)
+    # GPT is far superior at this
+    claude_suggestions = "" # call_anthropic(prompt, 0.4)
     gpt_suggestions = call_openai(prompt, 0.4)
 
     return "\n".join([claude_suggestions, gpt_suggestions])
@@ -172,6 +183,7 @@ def main(url, name, speakers_count):
     clean_transcript_path = f"./podcasts-clean-transcripts/{name}.md"
     results_file_path = f"./podcasts-results/{name}.md"
     substack_file_path = f"./podcasts-results/substack_{name}.md"
+    youtube_subs_path = f"./podcasts-results/{name}-yt-subtitles.srt"
     
     # These are probably not the most elegant solutions, but they 
     # help with saving time since transcriptions are the same but we
@@ -186,6 +198,11 @@ def main(url, name, speakers_count):
         transcript = json.loads(file)['segments']
         
     print("Raw transcript is ready")
+    
+    if not os.path.exists(youtube_subs_path):
+        process_youtube_transcript(transcript, name)
+    
+    print("YouTube subtitles generated")
     
     if not os.path.exists(clean_transcript_path):
         transcript = process_transcript(transcript, name)
@@ -212,7 +229,8 @@ def main(url, name, speakers_count):
     
     print("Titles are ready")
     
-    tweet_suggestions_str = tweet_suggestions(transcript)
+    # These tweets are never quite good... 
+    tweet_suggestions_str = "" # tweet_suggestions(transcript)
     
     print("Tweets are ready")
 
@@ -249,4 +267,15 @@ def main(url, name, speakers_count):
     
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Transcribe the podcast audio from an URL like tmpfiles.")
+    parser.add_argument("url", help="The URL of the podcast to be processed.")
+    parser.add_argument("name", help="The name of the output transcript file without extension.")
+    parser.add_argument("speakers", help="The number of speakers on the track.", default=3)
+    
+    args = parser.parse_args()
+
+    url = args.url
+    name = args.name
+    speakers_count = int(args.speakers)
+    
+    main(url, name, speakers_count)
