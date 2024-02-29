@@ -49,7 +49,7 @@ def call_openai(prompt, temperature=0.5):
             {"role": "user", "content": prompt}
         ])
         return result.choices[0].message.content
-    except openai.InvalidRequestError as e:
+    except openai.BadRequestError as e:
         error_msg = f"An error occurred with OpenAI: {e}"
         print(error_msg)
         return error_msg
@@ -143,7 +143,7 @@ def create_show_notes(transcript):
     return "\n".join([claude_suggestions, gpt_suggestions])
 
 def create_writeup(transcript):
-    prompt = f"You're the writing assistant of a podcast producer. For each episode, we do a write up to recap the core ideas of the episode and expand on them. Write a list of bullet points on topics we should expand on, and then 4-5 paragraphs about them. Here's the transcript: \n\n {transcript}",
+    prompt = f"You're the writing assistant of a podcast producer. For each episode, we do a write up to recap the core ideas of the episode and expand on them. Write a list of bullet points on topics we should expand on, and then 4-5 paragraphs about them. Here's the transcript: \n\n {transcript}"
     
     claude_suggestions = call_anthropic(prompt, 0.7)
     gpt_suggestions = call_openai(prompt, 0.7)
