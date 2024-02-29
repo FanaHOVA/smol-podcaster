@@ -29,7 +29,7 @@ To run:
 
 `python smol_podcaster.py AUDIO_FILE_URL GUEST_NAME NUMBER_OF_SPEAKERS`
 
-The URL needs to be a direct download link, it can't be a GDrive. For files <100MB you can use tmpfiles.org, otherwise Dropbox. For example: 
+The URL needs to be a direct download link, it can't be a GDrive. For files <100MB you can use [tmpfiles.org](https://tmpfiles.org/) (e.g. `https://tmpfiles.org/dl/4338258/audio.mp3`), otherwise Dropbox. For example: 
 
 `python smol_podcaster.py "https://dl.dropboxusercontent.com/XXXX" "Tianqi" 3`  
 

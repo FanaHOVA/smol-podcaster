@@ -62,7 +62,10 @@ def transcribe_audio(file_url, episode_name, speakers_count):
             "prompt": "Audio of Latent Space, a technical podcast about artificial intelligence and machine learning hosted by Swyx and Alessio."
         }
     )
-    
+    # if directory doesn't exist
+    if not os.path.exists("./podcasts-raw-transcripts"):
+        os.makedirs("./podcasts-raw-transcripts")
+        
     with open(f"./podcasts-raw-transcripts/{episode_name}.json", "w") as f:
         json.dump(output, f)
 
