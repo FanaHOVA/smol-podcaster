@@ -7,14 +7,12 @@ from datetime import datetime, timedelta
 import json
 
 import replicate
-import openai
 from openai import OpenAI
-
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
 
 load_dotenv()
 
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 anthropic = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 # common ML words that the replicate model doesn't know, can programatically update the transcript
