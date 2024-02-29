@@ -2,7 +2,7 @@ requests
 replicate
 python-dotenv
 anthropic
-openai
+openai>=1.13.3
 flask
 celery
 honcho

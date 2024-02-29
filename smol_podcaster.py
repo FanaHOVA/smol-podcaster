@@ -7,13 +7,19 @@ from datetime import datetime, timedelta
 import json
 
 import replicate
-import openai
+from openai import OpenAI
 from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
 
 load_dotenv()
 
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 anthropic = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
+# common ML words that the replicate model doesn't know, can programatically update the transcript
+fix_recording_mapping = {
+    "noose": "Nous",
+    "Dali": "DALL·E",
+}
 
 def call_anthropic(prompt, temperature=0.5):
     prompt = f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}"
@@ -35,15 +41,13 @@ def call_anthropic(prompt, temperature=0.5):
 
 def call_openai(prompt, temperature=0.5):
     try:
-        result = openai.ChatCompletion.create(
-            model="gpt-4-0125-preview",
-            temperature=temperature,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
+        result = client.chat.completions.create(model="gpt-4-0125-preview",
+        temperature=temperature,
+        messages=[
+            {"role": "user", "content": prompt}
+        ])
         return result.choices[0].message.content
-    except openai.error.InvalidRequestError as e:
+    except openai.BadRequestError as e:
         error_msg = f"An error occurred with OpenAI: {e}"
         print(error_msg)
         return error_msg
@@ -62,7 +66,10 @@ def transcribe_audio(file_url, episode_name, speakers_count):
             "prompt": "Audio of Latent Space, a technical podcast about artificial intelligence and machine learning hosted by Swyx and Alessio."
         }
     )
-    
+    # if directory doesn't exist
+    if not os.path.exists("./podcasts-raw-transcripts"):
+        os.makedirs("./podcasts-raw-transcripts")
+        
     with open(f"./podcasts-raw-transcripts/{episode_name}.json", "w") as f:
         json.dump(output, f)
 
@@ -84,6 +91,10 @@ def process_transcript(transcript, episode_name):
     for entry in transcript:
         speaker = entry["speaker"]
         text = entry["text"]
+        
+        # replace each word in fix_recording_mapping with the correct word
+        for key, value in fix_recording_mapping.items():
+            text = text.replace(key, value)
 
         # Convert "end" value to seconds and convert to hours, minutes and seconds
         seconds = int(float(entry["start"]))
@@ -130,7 +141,7 @@ def create_show_notes(transcript):
     return "\n".join([claude_suggestions, gpt_suggestions])
 
 def create_writeup(transcript):
-    prompt = f"You're the writing assistant of a podcast producer. For each episode, we do a write up to recap the core ideas of the episode and expand on them. Write a list of bullet points on topics we should expand on, and then 4-5 paragraphs about them. Here's the transcript: \n\n {transcript}",
+    prompt = f"You're the writing assistant of a podcast producer. For each episode, we do a write up to recap the core ideas of the episode and expand on them. Write a list of bullet points on topics we should expand on, and then 4-5 paragraphs about them. Here's the transcript: \n\n {transcript}"
     
     claude_suggestions = call_anthropic(prompt, 0.7)
     gpt_suggestions = call_openai(prompt, 0.7)
