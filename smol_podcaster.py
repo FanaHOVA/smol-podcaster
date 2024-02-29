@@ -8,11 +8,13 @@ import json
 
 import replicate
 import openai
+from openai import OpenAI
+
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
 
 load_dotenv()
 
-openai.api_key = os.environ.get("OPENAI_API_KEY")
 anthropic = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 def call_anthropic(prompt, temperature=0.5):
@@ -35,15 +37,13 @@ def call_anthropic(prompt, temperature=0.5):
 
 def call_openai(prompt, temperature=0.5):
     try:
-        result = openai.ChatCompletion.create(
-            model="gpt-4-0125-preview",
-            temperature=temperature,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
+        result = client.chat.completions.create(model="gpt-4-0125-preview",
+        temperature=temperature,
+        messages=[
+            {"role": "user", "content": prompt}
+        ])
         return result.choices[0].message.content
-    except openai.error.InvalidRequestError as e:
+    except openai.InvalidRequestError as e:
         error_msg = f"An error occurred with OpenAI: {e}"
         print(error_msg)
         return error_msg
