@@ -17,6 +17,12 @@ load_dotenv()
 
 anthropic = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
+# common ML words that the replicate model doesn't know, can programatically update the transcript
+fix_recording_mapping = {
+    "noose": "Nous",
+    "Dali": "DALL·E",
+}
+
 def call_anthropic(prompt, temperature=0.5):
     prompt = f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}"
     try:
@@ -87,6 +93,10 @@ def process_transcript(transcript, episode_name):
     for entry in transcript:
         speaker = entry["speaker"]
         text = entry["text"]
+        
+        # replace each word in fix_recording_mapping with the correct word
+        for key, value in fix_recording_mapping.items():
+            text = text.replace(key, value)
 
         # Convert "end" value to seconds and convert to hours, minutes and seconds
         seconds = int(float(entry["start"]))
