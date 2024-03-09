@@ -33,6 +33,12 @@ The URL needs to be a direct download link, it can't be a GDrive. For files <100
 
 `python smol_podcaster.py "https://dl.dropboxusercontent.com/XXXX" "Tianqi" 3`  
 
+Or, if you want to use a local file (with absolute or relative paths), use the following:
+```
+python smol_podcaster.py audio_sample.mp3 "test" 1
+```
+Or, use `~/Downloads/audio_sample.mp3` for file.
+
 The script will automatically switch https://www.dropbox.com to https://dl.dropboxusercontent.com in the link.
 
 ### Run with web UI + background runs
