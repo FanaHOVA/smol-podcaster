@@ -47,7 +47,7 @@ def call_openai(prompt, temperature=0.5):
             {"role": "user", "content": prompt}
         ])
         return result.choices[0].message.content
-    except openai.BadRequestError as e:
+    except OpenAI.BadRequestError as e:
         error_msg = f"An error occurred with OpenAI: {e}"
         print(error_msg)
         return error_msg
@@ -188,6 +188,44 @@ def tweet_suggestions(transcript):
     suggestions = f"GPT-4 tweet suggestions:\n{gpt_suggestions}\n\nClaude's tweet suggestions:\n{claude_suggestions}\n"
     
     return suggestions
+
+def upload_file_and_use_url(file_path):
+    """
+    Uploads a file to the temporary file hosting service and prints the downloadable file URL.
+
+    Parameters:
+    - file_path: The local path to the file you want to upload.
+
+    Returns:
+    The URL of the uploaded file.
+    """
+    # check if url is file with os, upload to tmpfiles if is
+    if os.path.exists(file_path):
+        print("Uploading local file to send to API.")
+        upload_url = 'https://tmpfiles.org/api/v1/upload'
+        # Open the file in binary mode
+        with open(file_path, 'rb') as file:
+            # The 'files' parameter takes a dictionary with the form field name as the key
+            # and a tuple with filename and file object (or content) as the value.
+            files = {'file': (file_path, file)}
+            response = requests.post(upload_url, files=files)
+            
+            # Check if the file was uploaded successfully
+            if response.status_code == 200:
+                # Assuming the API returns a JSON response with the URL of the uploaded file
+                # under a key named 'url'. Adjust the key as per the actual API response.
+                file_url = response.json()
+                print(f"File uploaded successfully. URL: {file_url}")
+                # convert url by adding dl/ after https://tmpfiles.org/
+                return file_url['data']['url'].replace("https://tmpfiles.org/", "https://tmpfiles.org/dl/")
+            else:
+                print("Failed to upload the file. Please check the error and try again.")
+                return None
+    else:
+        print("Using file at remote URL.")
+        return file_path
+
+
     
 def main(url, name, speakers_count): 
     raw_transcript_path = f"./podcasts-raw-transcripts/{name}.json"
@@ -202,6 +240,9 @@ def main(url, name, speakers_count):
     
     print('Starting transcription')
     
+    # function that uploads if it is a file, or just returns the url
+    url = upload_file_and_use_url(url)
+
     if not os.path.exists(raw_transcript_path):
         transcript = transcribe_audio(url, name, speakers_count)
     else:
