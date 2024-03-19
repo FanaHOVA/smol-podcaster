@@ -8,41 +8,46 @@ import json
 
 import replicate
 from openai import OpenAI
-from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
+from anthropic import Anthropic
 
 load_dotenv()
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 anthropic = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
+ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL") or "claude-3-opus-20240229"
+GPT_MODEL = os.environ.get("GPT_MODEL") or "gpt-4-0125-preview"
+
 # common ML words that the replicate model doesn't know, can programatically update the transcript
 fix_recording_mapping = {
     "noose": "Nous",
     "Dali": "DALL·E",
-    "Swyggs": "Swyx"
+    "Swyggs": "Swyx",
+    " lama ": " Llama "
 }
 
-def call_anthropic(prompt, temperature=0.5):
-    prompt = f"{HUMAN_PROMPT} {prompt} {AI_PROMPT}"
+def call_anthropic(prompt, temperature=0.5):   
     try:
         anthropic = Anthropic(
             api_key=os.environ.get("ANTHROPIC_API_KEY"),
         )
             
-        request = anthropic.completions.create(
-            model="claude-3-opus-20240229",
-            max_tokens_to_sample=3000,
+        request = anthropic.messages.create(
+            model=ANTHROPIC_MODEL,
+            max_tokens=3000,
             temperature=temperature,
-            prompt=prompt,
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
         )
         
-        return request.completion
-    except:
-        return "An error occured with Claude"
+        return request.content[0].text
+    except Exception as e:
+        return f"An error occured with Claude: {e}"
 
 def call_openai(prompt, temperature=0.5):
     try:
-        result = client.chat.completions.create(model="gpt-4-0125-preview",
+        result = client.chat.completions.create(model=GPT_MODEL,
         temperature=temperature,
         messages=[
             {"role": "user", "content": prompt}
@@ -242,9 +247,8 @@ def main(url, name, speakers_count):
     print('Starting transcription')
     
     # function that uploads if it is a file, or just returns the url
-    url = upload_file_and_use_url(url)
-
     if not os.path.exists(raw_transcript_path):
+        url = upload_file_and_use_url(url)
         transcript = transcribe_audio(url, name, speakers_count)
     else:
         file = open(raw_transcript_path, "r").read()
