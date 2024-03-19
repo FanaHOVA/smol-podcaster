@@ -19,6 +19,7 @@ anthropic = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 fix_recording_mapping = {
     "noose": "Nous",
     "Dali": "DALL·E",
+    "Swyggs": "Swyx"
 }
 
 def call_anthropic(prompt, temperature=0.5):
@@ -29,7 +30,7 @@ def call_anthropic(prompt, temperature=0.5):
         )
             
         request = anthropic.completions.create(
-            model="claude-2",
+            model="claude-3-opus-20240229",
             max_tokens_to_sample=3000,
             temperature=temperature,
             prompt=prompt,
@@ -126,7 +127,7 @@ def create_chapters(transcript):
     prompt = f"I'm going to give you a podcast transcript with timestamps for each speaker section in this format: `SPEAKER: Some transcription [00:00:00]`. Generate a list of all major topics covered in the podcast, and the timestamp where the discussion starts. Make sure to use the timestamp BEFORE the the discussion starts. Make sure to cover topics from the whole episode. Use this format: `- [00:00:00] Topic name`. Here's the transcript: \n\n {transcript}"
     
     # GPT-4 is better at this as well
-    claude_suggestions = "" #call_anthropic(prompt, 0.6)
+    claude_suggestions = call_anthropic(prompt, 0.6)
     gpt_suggestions = call_openai(prompt, 0.6)
     
     return "\n".join([claude_suggestions, gpt_suggestions])
@@ -135,7 +136,7 @@ def create_show_notes(transcript):
     prompt = f"I'll give you a podcast transcript; help me create a list of every company, person, project, or any other named entitiy that you find in it. Here's the transcript: \n\n {transcript}"
     
     # GPT is far superior at this
-    claude_suggestions = "" # call_anthropic(prompt, 0.4)
+    claude_suggestions = call_anthropic(prompt, 0.4)
     gpt_suggestions = call_openai(prompt, 0.4)
 
     return "\n".join([claude_suggestions, gpt_suggestions])
