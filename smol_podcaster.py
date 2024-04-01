@@ -212,7 +212,7 @@ def upload_file_and_use_url(file_path):
             # The 'files' parameter takes a dictionary with the form field name as the key
             # and a tuple with filename and file object (or content) as the value.
             files = {'file': (file_path, file)}
-            response = requests.post(upload_url, files=files)
+            response = requests.post(upload_url, files=files, timeout=60)
             
             # Check if the file was uploaded successfully
             if response.status_code == 200:
