@@ -231,7 +231,7 @@ def upload_file_and_use_url(file_path):
 
 
     
-def main(url, name, speakers_count): 
+def main(url, name, speakers_count, transcript_only): 
     raw_transcript_path = f"./podcasts-raw-transcripts/{name}.json"
     clean_transcript_path = f"./podcasts-clean-transcripts/{name}.md"
     results_file_path = f"./podcasts-results/{name}.md"
@@ -266,6 +266,9 @@ def main(url, name, speakers_count):
         
     print("Clean transcript is ready")
 
+    if transcript_only:
+        return
+    
     chapters = create_chapters(transcript)
     
     print(chapters)
@@ -326,11 +329,13 @@ if __name__ == "__main__":
     parser.add_argument("url", help="The URL of the podcast to be processed.")
     parser.add_argument("name", help="The name of the output transcript file without extension.")
     parser.add_argument("speakers", help="The number of speakers on the track.", default=3)
-    
+    parser.add_argument("--transcript_only", help="Whether to only generate the transcript.", default=False, nargs='?')
     args = parser.parse_args()
 
     url = args.url
     name = args.name
     speakers_count = int(args.speakers)
+    transcript_only = args.transcript_only
     
-    main(url, name, speakers_count)
+    main(url, name, speakers_count, transcript_only)
+
