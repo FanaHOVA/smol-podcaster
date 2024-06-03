@@ -9,9 +9,9 @@ app = Celery('tasks')
 app.config_from_object('celeryconfig')
 
 @app.task
-def run_smol_podcaster(url, name, speakers, transcript_only):
+def run_smol_podcaster(url, name, speakers, transcript_only, generate_extra):
     logger.info(f"Running smol_podcaster for {name}")
-    results = smol_podcaster.main(url, name, speakers, transcript_only)
+    results = smol_podcaster.main(url, name, speakers, transcript_only, generate_extra)
     
     logger.info(f"Results for {name}: {results}")
     return "The path was: " + results

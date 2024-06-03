@@ -297,7 +297,7 @@ def update_video_chapters(audio_chapters, audio_file_name, video_file_name):
     return spaced
     
 
-def main(url, name, speakers_count, transcript_only): 
+def main(url, name, speakers_count, transcript_only, generate_extra): 
     raw_transcript_path = f"./podcasts-raw-transcripts/{name}.json"
     clean_transcript_path = f"./podcasts-clean-transcripts/{name}.md"
     results_file_path = f"./podcasts-results/{name}.md"
@@ -349,14 +349,14 @@ def main(url, name, speakers_count, transcript_only):
     
     print("Writeup is ready")
     
-    #title_suggestions_str = title_suggestions(writeup)
+    if generate_extra:
+        title_suggestions_str = title_suggestions(writeup)
     
-    #print("Titles are ready")
-    
-    # These tweets are never quite good... 
-    #tweet_suggestions_str = "" # tweet_suggestions(transcript)
-    
-    #print("Tweets are ready")
+        print("Titles are ready")
+        
+        tweet_suggestions_str = tweet_suggestions(transcript)
+        
+        print("Tweets are ready")
 
     with open(results_file_path, "w") as f:
         f.write("Chapters:\n")
@@ -368,12 +368,14 @@ def main(url, name, speakers_count, transcript_only):
         f.write("Show Notes:\n")
         f.write(show_notes)
         f.write("\n\n")
-        #f.write("Title Suggestions:\n")
-        #f.write(title_suggestions_str)
-        #f.write("\n\n")
-        #f.write("Tweet Suggestions:\n")
-        #f.write(tweet_suggestions_str)
-        #f.write("\n")
+        
+        if generate_extra:
+            f.write("Title Suggestions:\n")
+            f.write(title_suggestions_str)
+            f.write("\n\n")
+            f.write("Tweet Suggestions:\n")
+            f.write(tweet_suggestions_str)
+            f.write("\n")
         
     with open(substack_file_path, "w") as f:
         f.write("### Show Notes\n")
@@ -401,13 +403,14 @@ if __name__ == "__main__":
     parser.add_argument("name", help="The name of the output transcript file without extension.")
     parser.add_argument("speakers", help="The number of speakers on the track.", default=3)
     parser.add_argument("--transcript_only", help="Whether to only generate the transcript.", default=False, nargs='?')
-    parser.add_argument("--video_only", help="Only return the video chapters.", default=False, nargs='?')
+    parser.add_argument("--generate_extra", help="Whether to generate extra content like titles and tweets.", default=False, nargs='?')
     args = parser.parse_args()
 
     url = args.url
     name = args.name
     speakers_count = int(args.speakers)
     transcript_only = args.transcript_only
+    generate_extra = args.generate_extra
     
-    main(url, name, speakers_count, transcript_only)
+    main(url, name, speakers_count, transcript_only, generate_extra)
 

@@ -19,10 +19,11 @@ def process_form():
     # Check if the checkboxes are checked, but transforming into bool because
     # the checkbox passes `on`, but blank is None
     transcript_only = True if request.form.get('transcript-only') else False
+    generate_extra = True if request.form.get('generate-extra') else False
     
     app.logger.info(f"Transcript Only: {transcript_only}")
     
-    run_smol_podcaster.delay(url, name, speakers, transcript_only)
+    run_smol_podcaster.delay(url, name, speakers, transcript_only, generate_extra)
     
     return render_template('index.html', confirmation=(f"Now processing {name}"))
 
