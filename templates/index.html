@@ -1,51 +1,104 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <title>Smol Podcaster</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Smol Podcaster</title>
 </head>
-
 <body class="bg-gray-100">
+    <header class="bg-indigo-600 p-4 text-white">
+        <h1 class="text-3xl font-bold text-center">Smol Podcaster</h1> 
+    </header>
 
-  <header class="bg-indigo-600 p-4 text-white">
-    <h1 class="text-3xl font-bold text-center">Smol Podcaster</h1> 
-  </header>
+    <main class="max-w-lg mx-auto p-6">
+        <div class="mb-6">
+            <div class="flex">
+                <div class="w-1/2 px-2">
+                    <button class="tab-button w-full py-2 px-4 bg-white text-indigo-600 font-semibold rounded-lg shadow-md hover:bg-gray-200 focus:outline-none active" data-tab="create-artifacts">Create Artifacts</button>
+                </div>
+                <div class="w-1/2 px-2">
+                    <button class="tab-button w-full py-2 px-4 bg-white text-indigo-600 font-semibold rounded-lg shadow-md hover:bg-gray-200 focus:outline-none" data-tab="sync-chapters">Sync Video Chapters</button>
+                </div>
+            </div>
+        </div>
 
-  <main class="max-w-lg mx-auto p-6">
+        <div id="create-artifacts" class="tab-content">
+            {% if confirmation %}
+            <div class="p-4 bg-green-200">
+                {{ confirmation }}
+            </div>
+            {% endif %}
 
-    <h2 class="text-2xl font-bold mb-6">Podcast Processing Form</h2>
+            <form action="/process" method="post" class="bg-white p-6 rounded-lg shadow-md">
+                <div class="mb-4">
+                    <label for="url" class="block text-gray-700 font-bold mb-2">URL:</label>
+                    <input type="text" id="url" name="url" class="border p-2 w-full rounded" required>
+                </div>
 
-    {% if confirmation %}
-      <div class="p-4 bg-green-200">
-        {{ confirmation }}
-      </div>
-    {% endif %}
-  
-    <form action="/process" method="post" class="bg-white p-6 rounded-lg shadow-md">
+                <div class="mb-4">
+                    <label for="speakers" class="block text-gray-700 font-bold mb-2">Number of Speakers:</label>
+                    <input type="number" id="speakers" name="speakers" class="border p-2 w-full rounded" required>
+                </div>
 
-      <div class="mb-4">
-        <label for="url" class="block text-gray-700 font-bold mb-2">URL:</label>
-        <input type="text" id="url" name="url" class="border p-2 w-full rounded">
-      </div>
+                <div class="mb-4">
+                    <label for="name" class="block text-gray-700 font-bold mb-2">Name:</label>
+                    <input type="text" id="name" name="name" class="border p-2 w-full rounded" required>
+                </div>
 
-      <div class="mb-4">
-        <label for="speakers" class="block text-gray-700 font-bold mb-2">Number of Speakers:</label>
-        <input type="text" id="speakers" name="speakers" class="border p-2 w-full rounded">
-      </div>
+                <div class="mb-4">
+                    <label for="transcript-only" class="block text-gray-700 font-bold mb-2">Transcript Only?</label>
+                    <input type="checkbox" id="transcript-only" name="transcript-only" class="border p-2 rounded">
+                </div>
 
-      <div class="mb-4">
-        <label for="name" class="block text-gray-700 font-bold mb-2">Name:</label>
-        <input type="text" id="name" name="name" class="border p-2 w-full rounded">
-      </div>
+                <div class="mb-4">
+                    <label for="generate-extra" class="block text-gray-700 font-bold mb-2">Generate titles and tweets too?</label>
+                    <input type="checkbox" id="generate-extra" name="generate-extra" class="border p-2 rounded">
+                </div>
 
-      <button class="bg-indigo-500 text-white py-2 px-4 rounded hover:bg-indigo-600">Submit</button>
+                <button class="bg-indigo-500 text-white py-2 px-4 rounded hover:bg-indigo-600">Submit</button>
+            </form>
+        </div>
 
-    </form>
-  </main>
+        <div id="sync-chapters" class="tab-content hidden">
+            <form action="/sync_chapters" method="post" class="bg-white p-6 rounded-lg shadow-md">
+                <div class="mb-4">
+                    <label for="video_name" class="block text-gray-700 font-bold mb-2">Video File Name:</label>
+                    <input type="text" id="video_name" name="video_name" class="border p-2 w-full rounded" required>
+                </div>
 
+                <div class="mb-4">
+                    <label for="audio_name" class="block text-gray-700 font-bold mb-2">Audio File Name:</label>
+                    <input type="text" id="audio_name" name="audio_name" class="border p-2 w-full rounded" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="chapters" class="block text-gray-700 font-bold mb-2">Chapters:</label>
+                    <textarea id="chapters" name="chapters" rows="10" class="border p-2 w-full rounded" required></textarea>
+                </div>
+
+                <button class="bg-indigo-500 text-white py-2 px-4 rounded hover:bg-indigo-600">Sync Chapters</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.add('hidden'));
+
+                    this.classList.add('active');
+                    document.getElementById(tabId).classList.remove('hidden');
+                });
+            });
+        });
+    </script>
 </body>
-
 </html>

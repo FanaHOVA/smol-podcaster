@@ -1,9 +1,11 @@
 import argparse
 import requests
+import logging
+import Levenshtein
+
 from dotenv import load_dotenv
 import os
 import re
-from datetime import datetime, timedelta
 import json
 
 import replicate
@@ -229,9 +231,73 @@ def upload_file_and_use_url(file_path):
         print("Using file at remote URL.")
         return file_path
 
+def update_video_chapters(audio_chapters, audio_file_name, video_file_name):
+    video_transcript_path = f"./podcasts-clean-transcripts/{video_file_name}.md"
+    audio_transcript_path = f"./podcasts-clean-transcripts/{audio_file_name}.md"
 
+    with open(video_transcript_path, "r") as f:
+        video_transcript = f.read()
+
+    with open(audio_transcript_path, "r") as f:
+        audio_transcript = f.read()
+        
+    logging.info(f"Updating video chapters for {audio_file_name}")
+
+    updated_chapters = []
+
+    for chapter in audio_chapters.split("\n"):
+        if chapter.strip() == "":
+            continue
+
+        timestamp, topic = chapter.split("]", 1)
+        timestamp = timestamp.strip("[]").strip()
+
+        # Find the corresponding segment in the audio transcript
+        # We go over every individual timestamps
+        audio_segment = None
+        for segment in audio_transcript.split("\n"):
+            if timestamp.strip() in segment.strip():
+                audio_segment = segment
+                break
+
+        if audio_segment is not None:
+            # Find the closest matching segment in the video transcript
+            closest_segment = None
+            min_distance = float("inf")
+            for segment in video_transcript.split("\n"):
+                distance = Levenshtein.distance(segment, audio_segment)
+                
+                if distance < min_distance:
+                    min_distance = distance
+                    closest_segment = segment
+
+            if closest_segment is not None:
+                video_seconds = closest_segment.split("]")[0]
+
+                updated_chapters.append(f"[{video_seconds.split('[')[1]}] {topic}")
+            else:
+                updated_chapters.append(f"Couldn't find a match for {timestamp}")
+        else:
+            updated_chapters.append(f"Couldn't find a match for {timestamp}")
+
+    spaced = "\n".join(updated_chapters)
     
-def main(url, name, speakers_count, transcript_only): 
+    logging.info(f"Updated video chapters for {audio_file_name}: {spaced}")
+    
+    substack_file_path = f"./podcasts-results/substack_{audio_file_name}.md"
+
+    with open(substack_file_path, "r") as f:
+        existing_content = f.read()
+
+    updated_content = "\n".join(updated_chapters) + "\n\n" + existing_content
+
+    with open(substack_file_path, "w") as f:
+        f.write(updated_content)
+        
+    return spaced
+    
+
+def main(url, name, speakers_count, transcript_only, generate_extra): 
     raw_transcript_path = f"./podcasts-raw-transcripts/{name}.json"
     clean_transcript_path = f"./podcasts-clean-transcripts/{name}.md"
     results_file_path = f"./podcasts-results/{name}.md"
@@ -283,14 +349,14 @@ def main(url, name, speakers_count, transcript_only):
     
     print("Writeup is ready")
     
-    title_suggestions_str = title_suggestions(writeup)
+    if generate_extra:
+        title_suggestions_str = title_suggestions(writeup)
     
-    print("Titles are ready")
-    
-    # These tweets are never quite good... 
-    tweet_suggestions_str = "" # tweet_suggestions(transcript)
-    
-    print("Tweets are ready")
+        print("Titles are ready")
+        
+        tweet_suggestions_str = tweet_suggestions(transcript)
+        
+        print("Tweets are ready")
 
     with open(results_file_path, "w") as f:
         f.write("Chapters:\n")
@@ -302,12 +368,14 @@ def main(url, name, speakers_count, transcript_only):
         f.write("Show Notes:\n")
         f.write(show_notes)
         f.write("\n\n")
-        f.write("Title Suggestions:\n")
-        f.write(title_suggestions_str)
-        f.write("\n\n")
-        f.write("Tweet Suggestions:\n")
-        f.write(tweet_suggestions_str)
-        f.write("\n")
+        
+        if generate_extra:
+            f.write("Title Suggestions:\n")
+            f.write(title_suggestions_str)
+            f.write("\n\n")
+            f.write("Tweet Suggestions:\n")
+            f.write(tweet_suggestions_str)
+            f.write("\n")
         
     with open(substack_file_path, "w") as f:
         f.write("### Show Notes\n")
@@ -317,6 +385,11 @@ def main(url, name, speakers_count, transcript_only):
         f.write(chapters)
         f.write("\n\n")
         f.write("### Transcript\n")
+        
+        # This is a fair compromise between open source usability while being the easiest for me, sorry reader
+        if "Alessio" in transcript:
+            f.write("**Alessio** [00:00:00]: Hey everyone, welcome to the Latent Space podcast. This is Alessio, partner and CTO-in-Residence at [Decibel Partners](https://decibel.vc), and I'm joined by my co-host Swyx, founder of [Smol AI](https://smol.ai).")
+        
         f.write(transcript)
     
     print(f"Results written to {results_file_path}")
@@ -330,12 +403,14 @@ if __name__ == "__main__":
     parser.add_argument("name", help="The name of the output transcript file without extension.")
     parser.add_argument("speakers", help="The number of speakers on the track.", default=3)
     parser.add_argument("--transcript_only", help="Whether to only generate the transcript.", default=False, nargs='?')
+    parser.add_argument("--generate_extra", help="Whether to generate extra content like titles and tweets.", default=False, nargs='?')
     args = parser.parse_args()
 
     url = args.url
     name = args.name
     speakers_count = int(args.speakers)
     transcript_only = args.transcript_only
+    generate_extra = args.generate_extra
     
-    main(url, name, speakers_count, transcript_only)
+    main(url, name, speakers_count, transcript_only, generate_extra)
 
