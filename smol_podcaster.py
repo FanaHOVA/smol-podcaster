@@ -6,7 +6,6 @@ import Levenshtein
 from dotenv import load_dotenv
 import os
 import re
-from datetime import datetime, timedelta
 import json
 
 import replicate
@@ -19,7 +18,7 @@ client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 anthropic = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL") or "claude-3-opus-20240229"
-GPT_MODEL = os.environ.get("GPT_MODEL") or "gpt-4o"
+GPT_MODEL = os.environ.get("GPT_MODEL") or "gpt-4-0125-preview"
 
 # common ML words that the replicate model doesn't know, can programatically update the transcript
 fix_recording_mapping = {
@@ -384,6 +383,11 @@ def main(url, name, speakers_count, transcript_only):
         f.write(chapters)
         f.write("\n\n")
         f.write("### Transcript\n")
+        
+        # This is a fair compromise between open source usability while being the easiest for me, sorry reader
+        if "Alessio" in transcript:
+            f.write("**Alessio** [00:00:00]: Hey everyone, welcome to the Latent Space podcast. This is Alessio, partner and CTO-in-Residence at [Decibel Partners](https://decibel.vc), and I'm joined by my co-host Swyx, founder of [Smol AI](https://smol.ai).")
+        
         f.write(transcript)
     
     print(f"Results written to {results_file_path}")
