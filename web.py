@@ -32,10 +32,13 @@ def sync_chapters():
     audio_name = request.form.get('audio_name')
     chapters = request.form.get('chapters')
     
+    app.logger.info(f"Syncing chapters for {video_name} and {audio_name}")
     # Call the `update_video_chapters` function with the provided parameters
-    run_video_chapters.delay(video_name, audio_name, chapters)
+    task = run_video_chapters.delay(chapters, audio_name, video_name)
     
-    return render_template('index.html', confirmation=(f"Chapters synced for {video_name} and {audio_name}"))
+    app.logger.info(f"Task ID: {task.id}")
+    
+    return render_template('index.html', confirmation=(f"Syncing chapters for {video_name} and {audio_name}"))
 
 
 if __name__ == '__main__':

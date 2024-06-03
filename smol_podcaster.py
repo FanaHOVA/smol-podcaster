@@ -1,5 +1,8 @@
 import argparse
 import requests
+import logging
+import Levenshtein
+
 from dotenv import load_dotenv
 import os
 import re
@@ -229,7 +232,18 @@ def upload_file_and_use_url(file_path):
         print("Using file at remote URL.")
         return file_path
 
-def update_video_chapters(audio_chapters, audio_transcript, video_transcript):
+def update_video_chapters(audio_chapters, audio_file_name, video_file_name):
+    video_transcript_path = f"./podcasts-clean-transcripts/{video_file_name}.md"
+    audio_transcript_path = f"./podcasts-clean-transcripts/{audio_file_name}.md"
+
+    with open(video_transcript_path, "r") as f:
+        video_transcript = f.read()
+
+    with open(audio_transcript_path, "r") as f:
+        audio_transcript = f.read()
+        
+    logging.info(f"Updating video chapters for {audio_file_name}")
+
     updated_chapters = []
 
     for chapter in audio_chapters.split("\n"):
@@ -240,9 +254,10 @@ def update_video_chapters(audio_chapters, audio_transcript, video_transcript):
         timestamp = timestamp.strip("[]").strip()
 
         # Find the corresponding segment in the audio transcript
+        # We go over every individual timestamps
         audio_segment = None
-        for segment in audio_transcript:
-            if topic.strip() in segment["text"].strip():
+        for segment in audio_transcript.split("\n"):
+            if timestamp.strip() in segment.strip():
                 audio_segment = segment
                 break
 
@@ -250,28 +265,39 @@ def update_video_chapters(audio_chapters, audio_transcript, video_transcript):
             # Find the closest matching segment in the video transcript
             closest_segment = None
             min_distance = float("inf")
-            for segment in video_transcript:
-                distance = abs(float(segment["start"]) - float(audio_segment["start"]))
+            for segment in video_transcript.split("\n"):
+                distance = Levenshtein.distance(segment, audio_segment)
+                
                 if distance < min_distance:
                     min_distance = distance
                     closest_segment = segment
 
             if closest_segment is not None:
-                video_seconds = int(float(closest_segment["start"]))
+                video_seconds = closest_segment.split("]")[0]
 
-                # Convert video seconds back to timestamp format
-                hours, remainder = divmod(video_seconds, 3600)
-                minutes, seconds = divmod(remainder, 60)
-                video_timestamp = f"[{hours:02d}:{minutes:02d}:{seconds:02d}]"
-
-                updated_chapters.append(f"{video_timestamp} {topic}")
+                updated_chapters.append(f"[{video_seconds.split('[')[1]}] {topic}")
             else:
-                updated_chapters.append(chapter)
+                updated_chapters.append(f"Couldn't find a match for {timestamp}")
         else:
-            updated_chapters.append(chapter)
+            updated_chapters.append(f"Couldn't find a match for {timestamp}")
 
-    return "\n".join(updated_chapters)
+    spaced = "\n".join(updated_chapters)
     
+    logging.info(f"Updated video chapters for {audio_file_name}: {spaced}")
+    
+    substack_file_path = f"./podcasts-results/substack_{audio_file_name}.md"
+
+    with open(substack_file_path, "r") as f:
+        existing_content = f.read()
+
+    updated_content = "\n".join(updated_chapters) + "\n\n" + existing_content
+
+    with open(substack_file_path, "w") as f:
+        f.write(updated_content)
+        
+    return spaced
+    
+
 def main(url, name, speakers_count, transcript_only): 
     raw_transcript_path = f"./podcasts-raw-transcripts/{name}.json"
     clean_transcript_path = f"./podcasts-clean-transcripts/{name}.md"
