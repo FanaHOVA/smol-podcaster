@@ -1,5 +1,5 @@
 from flask import Flask, request, render_template
-from tasks import run_smol_podcaster
+from tasks import run_smol_podcaster, run_video_chapters
 import logging
 
 app = Flask(__name__)
@@ -25,6 +25,18 @@ def process_form():
     run_smol_podcaster.delay(url, name, speakers, transcript_only)
     
     return render_template('index.html', confirmation=(f"Now processing {name}"))
+
+@app.route('/sync_chapters', methods=['POST'])
+def sync_chapters():
+    video_name = request.form.get('video_name')
+    audio_name = request.form.get('audio_name')
+    chapters = request.form.get('chapters')
+    
+    # Call the `update_video_chapters` function with the provided parameters
+    run_video_chapters.delay(video_name, audio_name, chapters)
+    
+    return render_template('index.html', confirmation=(f"Chapters synced for {video_name} and {audio_name}"))
+
 
 if __name__ == '__main__':
     app.run(debug=True)
