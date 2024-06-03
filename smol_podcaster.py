@@ -272,7 +272,7 @@ def update_video_chapters(audio_chapters, audio_transcript, video_transcript):
 
     return "\n".join(updated_chapters)
     
-def main(url, name, speakers_count, transcript_only, video_only): 
+def main(url, name, speakers_count, transcript_only): 
     raw_transcript_path = f"./podcasts-raw-transcripts/{name}.json"
     clean_transcript_path = f"./podcasts-clean-transcripts/{name}.md"
     results_file_path = f"./podcasts-results/{name}.md"
