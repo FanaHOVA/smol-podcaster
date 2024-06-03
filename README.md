@@ -23,6 +23,19 @@ Make a copy of the `.env.sample` and replace it with your keys:
 
 `mv .env.sample .env`
 
+### Run with web UI + background runs
+
+If you want to run a bunch in parallel (or remotely) you can use the web UI + celery. Before running, you'll need a broker for celery ([I use RabbitMQ](https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/rabbitmq.html)).
+
+If you have honcho installed, simply run `honcho start`, otherwise run each command manually:
+
+```
+celery -A tasks worker --loglevel=INFO
+flask --app web.py --debug run
+```
+
+Then simply go to `localhost:5000` and fill out the form. The files will be saved locally as `/podcast-results` just like the cli version.
+
 ### Run from CLI
 
 To run:
@@ -41,18 +54,31 @@ Or, use `~/Downloads/audio_sample.mp3` for file.
 
 The script will automatically switch https://www.dropbox.com to https://dl.dropboxusercontent.com in the link.
 
-### Run with web UI + background runs
+Optional flags:
 
-If you want to run a bunch in parallel (or remotely) you can use the web UI + celery. Before running, you'll need a broker for celery ([I use RabbitMQ](https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/rabbitmq.html)).
+- `--transcript_only` will generate only the transcript without any of the show notes
+- `--generate_extra` will also create tweets and title ideas
 
-If you have honcho installed, simply run `honcho start`, otherwise run each command manually:
+### Audio / Video Sync
 
-```
-celery -A tasks worker --loglevel=INFO
-flask --app web.py --debug run
-```
+If you use smol-podcaster to transcribe both your audio and video files, you can create chapters based on your audio ones, put them in the form, and create a new list that matches the video transcript for YouTube. Usually audio and video have different lengths because less pauses are edited, so re-using the audio timestamps in the video doesn't work.
 
-Then simply go to `localhost:5000` and fill out the form. The files will be saved locally as `/podcast-results` just like the cli version.
+For example:
+
+Timestamp:
+`[00:10:00] Talking about Latent Space`
+
+Audio Transcript:
+`[00:10:00] We love talking about Latent Space`
+
+Video Transcript:
+`[00:12:05] We love talking about Latent Space`
+
+Will return you new chapters where the timestamp would be
+`[00:12:05] Talking about Latent Space`
+
+This is based on string similarity, not hard-matching so don't worry about Whisper's mistakes.
+
 
 # License
 
