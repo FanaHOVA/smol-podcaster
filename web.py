@@ -1,7 +1,10 @@
 from flask import Flask, request, render_template
 from tasks import run_smol_podcaster
+import logging
 
 app = Flask(__name__)
+
+app.logger.setLevel(logging.INFO)
 
 @app.route('/')
 def index():
@@ -12,8 +15,16 @@ def process_form():
     url = request.form.get('url')
     speakers = int(request.form.get('speakers'))
     name = request.form.get('name')
-  
-    run_smol_podcaster.delay(url, name, speakers)
+    
+    # Check if the checkboxes are checked, but transforming into bool because
+    # the checkbox passes `on`, but blank is None
+    transcript_only = True if request.form.get('transcript-only') else False
+    video_only = True if request.form.get('video-only') else False
+    
+    app.logger.info(f"Transcript Only: {transcript_only}")
+    app.logger.info(f"Video Only: {video_only}")
+    
+    run_smol_podcaster.delay(url, name, speakers, transcript_only, video_only)
     
     return render_template('index.html', confirmation=(f"Now processing {name}"))
 

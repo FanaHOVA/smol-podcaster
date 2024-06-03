@@ -16,7 +16,7 @@ client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 anthropic = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL") or "claude-3-opus-20240229"
-GPT_MODEL = os.environ.get("GPT_MODEL") or "gpt-4-0125-preview"
+GPT_MODEL = os.environ.get("GPT_MODEL") or "gpt-4o"
 
 # common ML words that the replicate model doesn't know, can programatically update the transcript
 fix_recording_mapping = {
@@ -229,9 +229,50 @@ def upload_file_and_use_url(file_path):
         print("Using file at remote URL.")
         return file_path
 
+def update_video_chapters(audio_chapters, audio_transcript, video_transcript):
+    updated_chapters = []
 
+    for chapter in audio_chapters.split("\n"):
+        if chapter.strip() == "":
+            continue
+
+        timestamp, topic = chapter.split("]", 1)
+        timestamp = timestamp.strip("[]").strip()
+
+        # Find the corresponding segment in the audio transcript
+        audio_segment = None
+        for segment in audio_transcript:
+            if topic.strip() in segment["text"].strip():
+                audio_segment = segment
+                break
+
+        if audio_segment is not None:
+            # Find the closest matching segment in the video transcript
+            closest_segment = None
+            min_distance = float("inf")
+            for segment in video_transcript:
+                distance = abs(float(segment["start"]) - float(audio_segment["start"]))
+                if distance < min_distance:
+                    min_distance = distance
+                    closest_segment = segment
+
+            if closest_segment is not None:
+                video_seconds = int(float(closest_segment["start"]))
+
+                # Convert video seconds back to timestamp format
+                hours, remainder = divmod(video_seconds, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                video_timestamp = f"[{hours:02d}:{minutes:02d}:{seconds:02d}]"
+
+                updated_chapters.append(f"{video_timestamp} {topic}")
+            else:
+                updated_chapters.append(chapter)
+        else:
+            updated_chapters.append(chapter)
+
+    return "\n".join(updated_chapters)
     
-def main(url, name, speakers_count, transcript_only): 
+def main(url, name, speakers_count, transcript_only, video_only): 
     raw_transcript_path = f"./podcasts-raw-transcripts/{name}.json"
     clean_transcript_path = f"./podcasts-clean-transcripts/{name}.md"
     results_file_path = f"./podcasts-results/{name}.md"
@@ -283,14 +324,14 @@ def main(url, name, speakers_count, transcript_only):
     
     print("Writeup is ready")
     
-    title_suggestions_str = title_suggestions(writeup)
+    #title_suggestions_str = title_suggestions(writeup)
     
-    print("Titles are ready")
+    #print("Titles are ready")
     
     # These tweets are never quite good... 
-    tweet_suggestions_str = "" # tweet_suggestions(transcript)
+    #tweet_suggestions_str = "" # tweet_suggestions(transcript)
     
-    print("Tweets are ready")
+    #print("Tweets are ready")
 
     with open(results_file_path, "w") as f:
         f.write("Chapters:\n")
@@ -302,12 +343,12 @@ def main(url, name, speakers_count, transcript_only):
         f.write("Show Notes:\n")
         f.write(show_notes)
         f.write("\n\n")
-        f.write("Title Suggestions:\n")
-        f.write(title_suggestions_str)
-        f.write("\n\n")
-        f.write("Tweet Suggestions:\n")
-        f.write(tweet_suggestions_str)
-        f.write("\n")
+        #f.write("Title Suggestions:\n")
+        #f.write(title_suggestions_str)
+        #f.write("\n\n")
+        #f.write("Tweet Suggestions:\n")
+        #f.write(tweet_suggestions_str)
+        #f.write("\n")
         
     with open(substack_file_path, "w") as f:
         f.write("### Show Notes\n")
@@ -330,6 +371,7 @@ if __name__ == "__main__":
     parser.add_argument("name", help="The name of the output transcript file without extension.")
     parser.add_argument("speakers", help="The number of speakers on the track.", default=3)
     parser.add_argument("--transcript_only", help="Whether to only generate the transcript.", default=False, nargs='?')
+    parser.add_argument("--video_only", help="Only return the video chapters.", default=False, nargs='?')
     args = parser.parse_args()
 
     url = args.url
