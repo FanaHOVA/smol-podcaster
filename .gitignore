@@ -10,3 +10,5 @@ myenv
 /podcasts-results/*
 
 __pycache__
+
+.idea/
