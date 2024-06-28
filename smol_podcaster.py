@@ -34,7 +34,7 @@ def call_anthropic(prompt, temperature=0.5):
             api_key=os.environ.get("ANTHROPIC_API_KEY"),
         )
             
-        request = anthropic.messages.create(
+        result = anthropic.messages.create(
             model=ANTHROPIC_MODEL,
             max_tokens=3000,
             temperature=temperature,
@@ -43,7 +43,7 @@ def call_anthropic(prompt, temperature=0.5):
             ],
         )
         
-        return request.content[0].text
+        return result.content[0].text
     except Exception as e:
         return f"An error occurred with Claude: {e}"
 
