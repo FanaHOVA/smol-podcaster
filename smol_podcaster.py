@@ -9,7 +9,7 @@ import re
 import json
 
 import replicate
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
 from anthropic import Anthropic
 
 load_dotenv()
@@ -20,7 +20,7 @@ anthropic = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL") or "claude-3-opus-20240229"
 GPT_MODEL = os.environ.get("GPT_MODEL") or "gpt-4-0125-preview"
 
-# common ML words that the replicate model doesn't know, can programatically update the transcript
+# common ML words that the replicate model doesn't know, can programmatically update the transcript
 fix_recording_mapping = {
     "noose": "Nous",
     "Dali": "DALL·E",
@@ -34,7 +34,7 @@ def call_anthropic(prompt, temperature=0.5):
             api_key=os.environ.get("ANTHROPIC_API_KEY"),
         )
             
-        request = anthropic.messages.create(
+        result = anthropic.messages.create(
             model=ANTHROPIC_MODEL,
             max_tokens=3000,
             temperature=temperature,
@@ -43,9 +43,9 @@ def call_anthropic(prompt, temperature=0.5):
             ],
         )
         
-        return request.content[0].text
+        return result.content[0].text
     except Exception as e:
-        return f"An error occured with Claude: {e}"
+        return f"An error occurred with Claude: {e}"
 
 def call_openai(prompt, temperature=0.5):
     try:
@@ -55,7 +55,7 @@ def call_openai(prompt, temperature=0.5):
             {"role": "user", "content": prompt}
         ])
         return result.choices[0].message.content
-    except OpenAI.BadRequestError as e:
+    except OpenAIError as e:
         error_msg = f"An error occurred with OpenAI: {e}"
         print(error_msg)
         return error_msg
@@ -131,7 +131,7 @@ def process_youtube_transcript(parts, episode_name):
         file.writelines("\n".join(formatted_transcriptions))
 
 def create_chapters(transcript):
-    prompt = f"I'm going to give you a podcast transcript with timestamps for each speaker section in this format: `SPEAKER: Some transcription [00:00:00]`. Generate a list of all major topics covered in the podcast, and the timestamp where the discussion starts. Make sure to use the timestamp BEFORE the the discussion starts. Make sure to cover topics from the whole episode. Use this format: `- [00:00:00] Topic name`. Here's the transcript: \n\n {transcript}"
+    prompt = f"I'm going to give you a podcast transcript with timestamps for each speaker section in this format: `SPEAKER: Some transcription [00:00:00]`. Generate a list of all major topics covered in the podcast, and the timestamp where the discussion starts. Make sure to use the timestamp BEFORE the discussion starts. Make sure to cover topics from the whole episode. Use this format: `- [00:00:00] Topic name`. Here's the transcript: \n\n {transcript}"
     
     claude_suggestions = call_anthropic(prompt, 0.6)
     gpt_suggestions = call_openai(prompt, 0.6)
