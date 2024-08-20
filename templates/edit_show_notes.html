@@ -16,7 +16,7 @@
             {% for item in items %}
                 <div class="mb-4 flex items-center space-x-2">
                     <input type="text" id="item_{{ loop.index0 }}" name="item_{{ loop.index0 }}" value="{{ item[0] }}" class="border p-2 flex-grow rounded" placeholder="Name">
-                    <input type="text" id="url_{{ loop.index0 }}" name="url_{{ loop.index0 }}" value="{{ item[2] }}" class="border p-2 w-1/2 rounded" placeholder="URL">
+                    <input type="text" id="url_{{ loop.index0 }}" name="url_{{ loop.index0 }}" value="{{ item[1] }}" class="border p-2 w-1/2 rounded" placeholder="URL">
                     <button type="button" class="text-red-500 hover:text-red-700" onclick="removeItem(this)">X</button>
                 </div>
             {% endfor %}

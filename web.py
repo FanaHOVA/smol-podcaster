@@ -83,7 +83,7 @@ def edit_show_notes(episode_name):
         
         # Find the show notes section and replace it
         show_notes_pattern = r'### Show Notes.*?(?=### Timestamps)'
-        updated_show_notes = "### Show Notes\n" + "\n".join([f"- {item[0]}" + (f" [{item[1]}]({item[1]})" if item[1] else "") for item in updated_items])
+        updated_show_notes = "### Show Notes\n" + "\n".join([f"- {item[0]}" if not item[1] else f"- [{item[0]}]({item[1]})" for item in updated_items])
         updated_content = re.sub(show_notes_pattern, updated_show_notes, content, flags=re.DOTALL)
         
         # Write the updated content back to the file
@@ -101,7 +101,8 @@ def edit_show_notes(episode_name):
     show_notes_match = re.search(show_notes_pattern, content, re.DOTALL)
     if show_notes_match:
         show_notes = show_notes_match.group(1).strip()
-        items = re.findall(r'^(?:\d+\.|-)\s(.+?)(?:\s*\[(.*?)\]\((.*?)\))?$', show_notes, re.MULTILINE)
+        items = re.findall(r'^-\s*(?:\[([^\]]+)\]\(([^)]+)\)|(.+))$', show_notes, re.MULTILINE)
+        items = [(item[0] or item[2], item[1] or '') for item in items]
     else:
         items = []
     
