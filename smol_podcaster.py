@@ -17,8 +17,8 @@ load_dotenv()
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 anthropic = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
-ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL") or "claude-3-opus-20240229"
-GPT_MODEL = os.environ.get("GPT_MODEL") or "gpt-4-0125-preview"
+ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL") or "claude-3-5-sonnet-20240620"
+GPT_MODEL = os.environ.get("GPT_MODEL") or "gpt-4o-2024-08-06"
 
 # common ML words that the replicate model doesn't know, can programatically update the transcript
 fix_recording_mapping = {
@@ -138,8 +138,16 @@ def create_chapters(transcript):
     
     return "\n".join([claude_suggestions, gpt_suggestions])
 
+def clips_picker(transcript):
+    prompt = f"I'm about to release my new video podcast and I want to create four 60 second clips for YouTube Shorts. Can you suggest 7-8 passages that would make for good clips and their rough timestamps? They are usually very insightful, funny, or controversial parts of the discussion. Here's the transcript: \n\n {transcript}"
+    
+    claude_suggestions = call_anthropic(prompt, 0.5)
+    gpt_suggestions = call_openai(prompt, 0.5)
+
+    return "\n".join([claude_suggestions, gpt_suggestions])
+
 def create_show_notes(transcript):
-    prompt = f"I'll give you a podcast transcript; help me create a list of every company, person, project, or any other named entitiy that you find in it. Here's the transcript: \n\n {transcript}"
+    prompt = f"I'll give you a podcast transcript; help me create a list of every company, person, project, research paper, or any other named entitiy that you find in it. Return it as a markdown list. If it references a company or person that you know, add a link to their website or online profile. Here's the transcript: \n\n {transcript}"
     
     claude_suggestions = call_anthropic(prompt, 0.4)
     gpt_suggestions = call_openai(prompt, 0.4)
@@ -344,6 +352,10 @@ def main(url, name, speakers_count, transcript_only, generate_extra):
     show_notes = create_show_notes(transcript)
     
     print("Show notes are ready")
+    
+    clips_picker(transcript)
+    
+    print("Clips are ready")
     
     writeup = create_writeup(transcript)
     
