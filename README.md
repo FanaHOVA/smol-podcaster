@@ -1,6 +1,6 @@
 # smol-podcaster
 
-![Screenshot](screenshot.png)
+![Screenshot](screenshots/main.png)
 
 We use smol-podcaster to take care of most of [Latent Space](https://latent.space) transcription work. What it will do for you:
 
@@ -79,6 +79,16 @@ Will return you new chapters where the timestamp would be
 
 This is based on string similarity, not hard-matching so don't worry about Whisper's mistakes.
 
+
+### Edit Show Notes
+
+Each run generates a set of show notes from both OAI and Claude. The easiest way to consolidate them is the "Edit Show Notes" feature. Simply click "Edit Episode" to see a list of them, and then make the edits you need.
+
+![Screenshot](screenshots/edit.png)
+
+![Screenshot](screenshots/edit-full.png)
+
+After you're done editing, press "Save Changes" and it will rewrite the Markdown in your file to show the new cleaned and merged list.
 
 # License
 
