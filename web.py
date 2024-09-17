@@ -4,6 +4,8 @@ import os
 import re
 import logging
 from datetime import datetime
+import tempfile
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -34,18 +36,27 @@ def index():
 
 @app.route('/process', methods=['POST'])
 def process_form():
+    file_input = request.files.get('file_input')
     url = request.form.get('url')
     speakers = int(request.form.get('speakers'))
     name = request.form.get('name')
     
-    # Check if the checkboxes are checked, but transforming into bool because
-    # the checkbox passes `on`, but blank is None
-    transcript_only = True if request.form.get('transcript-only') else False
-    generate_extra = True if request.form.get('generate-extra') else False
+    transcript_only = bool(request.form.get('transcript-only'))
+    generate_extra = bool(request.form.get('generate-extra'))
     
     app.logger.info(f"Transcript Only: {transcript_only}")
     
-    run_smol_podcaster.delay(url, name, speakers, transcript_only, generate_extra)
+    if file_input and file_input.filename:
+        # Save the uploaded file to a temporary location
+        _, file_extension = os.path.splitext(file_input.filename)
+        temp_dir = tempfile.gettempdir()
+        temp_file_path = os.path.join(temp_dir, secure_filename(f"upload_{name}{file_extension}"))
+        file_input.save(temp_file_path)
+        file_or_url = temp_file_path
+    else:
+        file_or_url = url
+    
+    run_smol_podcaster.delay(file_or_url, name, speakers, transcript_only, generate_extra)
     
     return render_template('index.html', confirmation=(f"Now processing {name}"))
 
