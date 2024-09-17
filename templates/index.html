@@ -39,10 +39,15 @@
             </div>
             {% endif %}
 
-            <form action="/process" method="post" class="bg-white p-6 rounded-lg shadow-md">
+            <form action="/process" method="post" class="bg-white p-6 rounded-lg shadow-md" enctype="multipart/form-data">
                 <div class="mb-4">
-                    <label for="url" class="block text-gray-700 font-bold mb-2">URL:</label>
-                    <input type="text" id="url" name="url" class="border p-2 w-full rounded" required>
+                    <label for="file_input" class="block text-gray-700 font-bold mb-2">Upload audio File:</label>
+                    <input type="file" id="file_input" name="file_input" class="border p-2 w-full rounded">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="url" class="block text-gray-700 font-bold mb-2">Or Enter URL:</label>
+                    <input type="text" id="url" name="url" class="border p-2 w-full rounded">
                 </div>
 
                 <div class="mb-4">

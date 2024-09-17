@@ -2,6 +2,7 @@ import argparse
 import requests
 import logging
 import Levenshtein
+import tempfile
 
 from dotenv import load_dotenv
 import os
@@ -203,41 +204,41 @@ def tweet_suggestions(transcript):
     
     return suggestions
 
-def upload_file_and_use_url(file_path):
+def upload_file_and_use_url(file_or_url):
     """
-    Uploads a file to the temporary file hosting service and prints the downloadable file URL.
+    Handles file path or URL input and returns a URL for processing.
 
     Parameters:
-    - file_path: The local path to the file you want to upload.
+    - file_or_url: Either a local file path or a string URL
 
     Returns:
-    The URL of the uploaded file.
+    The URL of the file to be processed.
     """
-    # check if url is file with os, upload to tmpfiles if is
-    if os.path.exists(file_path):
-        print("Uploading local file to send to API.")
-        upload_url = 'https://tmpfiles.org/api/v1/upload'
-        # Open the file in binary mode
-        with open(file_path, 'rb') as file:
-            # The 'files' parameter takes a dictionary with the form field name as the key
-            # and a tuple with filename and file object (or content) as the value.
-            files = {'file': (file_path, file)}
-            response = requests.post(upload_url, files=files)
-            
-            # Check if the file was uploaded successfully
-            if response.status_code == 200:
-                # Assuming the API returns a JSON response with the URL of the uploaded file
-                # under a key named 'url'. Adjust the key as per the actual API response.
-                file_url = response.json()
-                print(f"File uploaded successfully. URL: {file_url}")
-                # convert url by adding dl/ after https://tmpfiles.org/
-                return file_url['data']['url'].replace("https://tmpfiles.org/", "https://tmpfiles.org/dl/")
-            else:
-                print("Failed to upload the file. Please check the error and try again.")
-                return None
+    if os.path.exists(file_or_url):
+        # It's a local file path
+        return upload_to_tmpfiles(file_or_url)
     else:
+        # It's already a URL
         print("Using file at remote URL.")
-        return file_path
+        return file_or_url
+
+def upload_to_tmpfiles(file_path):
+    """
+    Uploads a file to tmpfiles.org and returns the downloadable URL.
+    """
+    print("Uploading file to tmpfiles.org")
+    upload_url = 'https://tmpfiles.org/api/v1/upload'
+    with open(file_path, 'rb') as file:
+        files = {'file': (os.path.basename(file_path), file)}
+        response = requests.post(upload_url, files=files)
+        
+        if response.status_code == 200:
+            file_url = response.json()
+            print(f"File uploaded successfully. URL: {file_url}")
+            return file_url['data']['url'].replace("https://tmpfiles.org/", "https://tmpfiles.org/dl/")
+        else:
+            print("Failed to upload the file. Please check the error and try again.")
+            return None
 
 def update_video_chapters(audio_chapters, audio_file_name, video_file_name):
     video_transcript_path = f"./podcasts-clean-transcripts/{video_file_name}.md"
@@ -305,7 +306,7 @@ def update_video_chapters(audio_chapters, audio_file_name, video_file_name):
     return spaced
     
 
-def main(url, name, speakers_count, transcript_only, generate_extra): 
+def main(file_or_url, name, speakers_count, transcript_only, generate_extra): 
     raw_transcript_path = f"./podcasts-raw-transcripts/{name}.json"
     clean_transcript_path = f"./podcasts-clean-transcripts/{name}.md"
     results_file_path = f"./podcasts-results/{name}.md"
@@ -317,6 +318,18 @@ def main(url, name, speakers_count, transcript_only, generate_extra):
     # might want to tweak the other prompts for better results.
     
     print('Starting transcription')
+    
+    url = upload_file_and_use_url(file_or_url)
+    
+    if url is None:
+        print("Failed to process the file or URL.")
+        return
+    
+    if not os.path.exists(raw_transcript_path):
+        transcript = transcribe_audio(url, name, speakers_count)
+    else:
+        file = open(raw_transcript_path, "r").read()
+        transcript = json.loads(file)['segments']
     
     # function that uploads if it is a file, or just returns the url
     if not os.path.exists(raw_transcript_path):
