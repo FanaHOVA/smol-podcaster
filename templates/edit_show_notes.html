@@ -1,40 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html class="h-full bg-gray-950">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <title>Edit Show Notes - {{ episode_name }}</title>
 </head>
-<body class="bg-gray-100">
-    <header class="bg-indigo-600 p-4 text-white">
+<body class="h-full text-gray-200">
+    <header class="bg-gradient-to-r from-indigo-900 to-purple-900 p-4 text-white">
         <h1 class="text-3xl font-bold text-center">Edit Show Notes - {{ episode_name }}</h1>
     </header>
 
     <main class="max-w-3xl mx-auto p-6">
-        <form action="{{ url_for('edit_show_notes', episode_name=episode_name) }}" method="post" class="bg-white p-6 rounded-lg shadow-md">
+        <form action="{{ url_for('edit_show_notes', episode_name=episode_name) }}" method="post" class="bg-gray-800 p-6 rounded-lg shadow-md space-y-4">
             {% for item in items %}
-                <div class="mb-4 flex items-center space-x-2">
-                    <input type="text" id="item_{{ loop.index0 }}" name="item_{{ loop.index0 }}" value="{{ item[0] }}" class="border p-2 flex-grow rounded" placeholder="Name">
-                    <input type="text" id="url_{{ loop.index0 }}" name="url_{{ loop.index0 }}" value="{{ item[1] }}" class="border p-2 w-1/2 rounded" placeholder="URL">
-                    <button type="button" class="text-red-500 hover:text-red-700" onclick="removeItem(this)">X</button>
+                <div class="flex items-center space-x-4">
+                    <div class="flex-grow">
+                        <label for="item_{{ loop.index0 }}" class="sr-only">Name</label>
+                        <input type="text" id="item_{{ loop.index0 }}" name="item_{{ loop.index0 }}" value="{{ item[0] }}" class="bg-gray-700 border border-gray-600 p-2 w-full rounded text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name">
+                    </div>
+                    <div class="w-1/2">
+                        <label for="url_{{ loop.index0 }}" class="sr-only">URL</label>
+                        <input type="text" id="url_{{ loop.index0 }}" name="url_{{ loop.index0 }}" value="{{ item[1] }}" class="bg-gray-700 border border-gray-600 p-2 w-full rounded text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="URL">
+                    </div>
+                    <button type="button" class="text-red-500 hover:text-red-700" onclick="removeItem(this)">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
                 </div>
             {% endfor %}
-            <button type="button" onclick="addItem()" class="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 mb-4">Add Item</button>
-            <button type="submit" class="bg-indigo-500 text-white py-2 px-4 rounded hover:bg-indigo-600">Save Changes</button>
+            <button type="button" onclick="addItem()" class="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition-colors">Add Item</button>
+            <button type="submit" class="bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 transition-colors">Save Changes</button>
         </form>
     </main>
 
     <script>
         function addItem() {
             const container = document.querySelector('form');
-            const newIndex = container.querySelectorAll('.mb-4').length;
+            const newIndex = container.querySelectorAll('.flex.items-center').length;
             const newItem = document.createElement('div');
-            newItem.className = 'mb-4 flex items-center space-x-2';
+            newItem.className = 'flex items-center space-x-4';
             newItem.innerHTML = `
-                <input type="text" id="item_${newIndex}" name="item_${newIndex}" class="border p-2 flex-grow rounded" placeholder="Name">
-                <input type="text" id="url_${newIndex}" name="url_${newIndex}" class="border p-2 w-1/2 rounded" placeholder="URL">
-                <button type="button" class="text-red-500 hover:text-red-700" onclick="removeItem(this)">X</button>
+                <div class="flex-grow">
+                    <label for="item_${newIndex}" class="sr-only">Name</label>
+                    <input type="text" id="item_${newIndex}" name="item_${newIndex}" class="bg-gray-700 border border-gray-600 p-2 w-full rounded text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Name">
+                </div>
+                <div class="w-1/2">
+                    <label for="url_${newIndex}" class="sr-only">URL</label>
+                    <input type="text" id="url_${newIndex}" name="url_${newIndex}" class="bg-gray-700 border border-gray-600 p-2 w-full rounded text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="URL">
+                </div>
+                <button type="button" class="text-red-500 hover:text-red-700" onclick="removeItem(this)">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
             `;
             container.insertBefore(newItem, container.lastElementChild.previousElementSibling);
         }
