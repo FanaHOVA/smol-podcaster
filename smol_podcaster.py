@@ -206,38 +206,21 @@ def tweet_suggestions(transcript):
 
 def upload_file_and_use_url(file_or_url):
     """
-    Handles file upload or URL input and returns a URL for processing.
+    Handles file path or URL input and returns a URL for processing.
 
     Parameters:
-    - file_or_url: Either a FileStorage object (for uploaded files) or a string URL
+    - file_or_url: Either a local file path or a string URL
 
     Returns:
     The URL of the file to be processed.
     """
-    if isinstance(file_or_url, str):
-        # It's a URL or file path
-        if os.path.exists(file_or_url):
-            # It's a local file path
-            return upload_to_tmpfiles(file_or_url)
-        else:
-            # It's already a URL
-            print("Using file at remote URL.")
-            return file_or_url
+    if os.path.exists(file_or_url):
+        # It's a local file path
+        return upload_to_tmpfiles(file_or_url)
     else:
-        # It's an uploaded file
-        print("Processing uploaded file.")
-        # Create a temporary file to store the uploaded content
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
-            file_or_url.save(temp_file)
-            temp_file_path = temp_file.name
-        
-        # Upload the temporary file to tmpfiles.org
-        url = upload_to_tmpfiles(temp_file_path)
-        
-        # Remove the temporary file
-        os.unlink(temp_file_path)
-        
-        return url
+        # It's already a URL
+        print("Using file at remote URL.")
+        return file_or_url
 
 def upload_to_tmpfiles(file_path):
     """
