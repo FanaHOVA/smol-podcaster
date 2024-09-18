@@ -49,7 +49,7 @@ jsonrpcclient==4.0.3
 jupyter_client==8.6.0
 jupyter_core==5.7.1
 kombu==5.3.5
-Levenshtein-0.25.1
+Levenshtein==0.25.1
 markdown-it-py==3.0.0
 MarkupSafe==2.1.4
 matplotlib-inline==0.1.6
