@@ -120,4 +120,4 @@ def edit_show_notes(episode_name):
     return render_template('edit_show_notes.html', episode_name=episode_name, items=items)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=int(os.environ.get('PORT', 5000)))
