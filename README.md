@@ -61,7 +61,7 @@ Optional flags:
 
 ### Audio / Video Sync
 
-If you use smol-podcaster to transcribe both your audio and video files, you can create chapters based on your audio ones, put them in the form, and create a new list that matches the video transcript for YouTube. Usually audio and video have different lengths because less pauses are edited, so re-using the audio timestamps in the video doesn't work.
+If you use smol-podcaster to transcribe both your audio and video files, you can create chapters based on your audio ones, put them in the form, and create a new list that matches the video transcript for YouTube. Usually audio and video have different lengths because fewer pauses are edited, so re-using the audio timestamps in the video doesn't work.
 
 For example:
 
